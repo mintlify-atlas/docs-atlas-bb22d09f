@@ -1,0 +1,156 @@
+---
+title: "AI-native learning: skills and quizzes"
+description: "Two Claude Code skills: find your starting phase with a 10-question quiz, then test your understanding per phase with questions from the actual lesson content."
+keywords: ["ai native learning", "find your level", "check understanding", "claude code skills", "placement quiz", "phase quiz"]
+---
+
+This course is designed to be used with an AI coding agent, not just read passively. Two Claude Code skills are built into the repository: one that figures out where you should start, and one that tests whether you're ready to move on after completing a phase. Both use the actual course content — the lesson docs, the roadmap time estimates, the phase structure — rather than generic questions.
+
+## The two skills
+
+<CardGroup cols={2}>
+  <Card title="/find-your-level" icon="compass">
+    A 10-question placement quiz across 5 knowledge areas. Maps your score to a starting phase and generates a personalized study path with hour estimates for your specific path through the 20 phases.
+  </Card>
+  <Card title="/check-understanding N" icon="circle-check">
+    An 8-question per-phase quiz generated from the actual lesson docs in that phase. 4 conceptual questions and 4 practical questions. Tells you which specific lessons to revisit based on your answers.
+  </Card>
+</CardGroup>
+
+## /find-your-level
+
+Run this before you start the course, or any time you want to reassess your starting point.
+
+```bash
+# In Claude Code, from the repo root:
+/find-your-level
+```
+
+### How the quiz works
+
+The quiz covers 5 knowledge areas in 2 questions each (10 questions total). Questions are presented in rounds — you answer both questions in a round, see your area score, then move to the next round.
+
+| Round | Area | Questions |
+|-------|------|-----------|
+| 1 | Math & Statistics | Dot products, probability |
+| 2 | Classical ML | Class imbalance, hyperparameters |
+| 3 | Deep Learning | Backpropagation, residual connections |
+| 4 | NLP & Transformers | Attention mechanism, LoRA |
+| 5 | Applied AI | RAG, multi-agent coordination |
+
+### Score interpretation
+
+After all 5 rounds, the skill shows a breakdown and maps your total to an entry phase:
+
+| Total score | Entry phase | What it means |
+|-------------|-------------|---------------|
+| 0–3 | Phase 1: Math Foundations | Start from the ground up |
+| 4–5 | Phase 3: Deep Learning Core | You have math and ML basics |
+| 6–7 | Phase 7: Transformers Deep Dive | You know deep learning |
+| 8–9 | Phase 11: LLM Engineering | Go straight to LLM applications |
+| 10 | Phase 14: Agent Engineering | You know it all — build agents |
+
+### The personalized path table
+
+After revealing your entry phase, the skill generates a table covering all 20 phases with a status for each:
+
+```
+| Phase | Name                       | Status | Est. Hours |
+|-------|----------------------------|--------|------------|
+| 0     | Setup & Tooling            | Skip   | --         |
+| 1     | Math Foundations           | Review | 23         |
+| 2     | ML Fundamentals            | Skip   | --         |
+| 3     | Deep Learning Core         | Do     | 15         |
+| ...   | ...                        | ...    | ...        |
+
+Your personalized path: ~130 hours across 12 phases.
+```
+
+- **Skip:** You've covered this material. Hours show as `--`.
+- **Review:** You scored 1/2 in the corresponding knowledge area. Skim the lessons.
+- **Do:** Work through these lessons in order.
+
+The hour estimates come directly from the ROADMAP.md file, not hardcoded values — so they stay accurate as lessons are updated.
+
+<Tip>
+If you scored 1/2 in a knowledge area, the skill marks the corresponding phase as "Review" rather than "Skip". For example, scoring 1/2 in NLP & Transformers marks both Phase 5 and Phase 7 as Review instead of Skip.
+</Tip>
+
+## /check-understanding
+
+Run this after completing any phase to verify your understanding before moving on.
+
+```bash
+# Quiz yourself on Phase 3 (Deep Learning Core):
+/check-understanding 3
+
+# Accepts phase numbers or names:
+/check-understanding deep-learning
+/check-understanding transformers
+/check-understanding 14
+```
+
+### How the quiz works
+
+The skill reads the actual `docs/en.md` files from the lessons in the phase you specify, then generates 8 questions drawn from that content.
+
+**Questions 1–4: Conceptual (What/Why)**
+These test understanding of definitions, purpose, and reasoning. Example: "What problem do residual connections in ResNet primarily address?"
+
+**Questions 5–8: Practical (How/Build)**
+These test applied knowledge. Example: "Which of the following correctly implements the attention mechanism?" or "If your training loss stops decreasing after 10 epochs, what should you check first?"
+
+Each question is tagged with the specific lesson it came from. Questions are presented one at a time — you answer before seeing the next question.
+
+### Scoring and feedback
+
+After all 8 questions, you get a score and a grade:
+
+| Score | Grade | What happens |
+|-------|-------|--------------|
+| 7–8 | Mastered | Ready to move to the next phase |
+| 5–6 | Almost | Review the specific lessons tied to missed questions |
+| 3–4 | Developing | Revisit each missed topic before moving on |
+| 0–2 | Start over | Work through the phase again from the beginning |
+
+For every wrong answer, the skill shows:
+
+```
+Question 5: What problem do skip connections in ResNet primarily address?
+Your answer:   A
+Correct answer: B — Vanishing gradients in deep networks
+Why: As networks get deeper, gradients shrink multiplicatively during
+     backpropagation. Skip connections create a direct gradient path that
+     bypasses layers, keeping gradients large enough to update early weights.
+Review: Lesson 03 — Backpropagation from Scratch
+        phases/03-deep-learning-core/03-backpropagation/docs/en.md
+```
+
+### After the quiz
+
+At the end, you can retake the quiz with a fresh set of 8 questions from the same phase, switch to a different phase, or ask the skill to explain any concept from the questions you missed.
+
+<Note>
+If a phase has no lesson docs written yet — phases that are still planned rather than complete — the skill tells you and lists the completed phases you can quiz on instead.
+</Note>
+
+## Why this approach works
+
+Passive video courses have a retention problem. You watch a lecture on backpropagation, feel like you understand it, then can't implement it two weeks later. The lectures have no way to test whether understanding actually transferred.
+
+This course is structured differently in two ways:
+
+**Active implementation first.** Every Build It lesson requires you to write working code, not just follow along. Typing the code and running it creates a different kind of memory than watching someone else type it.
+
+**Spaced retrieval practice.** The `/check-understanding` skill puts retrieval practice after each phase — the most effective learning technique identified by cognitive science research. Being forced to retrieve information (rather than re-read it) transfers it from short-term to long-term memory. The questions come from the actual lesson content, not generic AI knowledge, so the quiz is testing what you specifically studied.
+
+The combination means you're not just progressing through phases — you're building verifiable, durable understanding at each step.
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get set up and run the placement quiz to find your entry phase.
+  </Card>
+  <Card title="How lessons work" icon="book-open" href="/how-lessons-work">
+    The 6-step lesson structure and what each lesson produces.
+  </Card>
+</CardGroup>

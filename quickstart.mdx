@@ -1,80 +1,156 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: "Quickstart: three ways to begin the course"
+description: "Clone and run your first lesson in under five minutes, or use the placement quiz to skip phases you already know and jump to the right starting point."
+keywords: ["quickstart", "getting started", "clone repo", "find your level", "prerequisites"]
 ---
 
-## Get started in three steps
+You can start this course in three different ways depending on how you learn. Just reading works. Cloning and running the code works better. Using the AI placement quiz to find your exact starting point is the recommended path for anyone who already knows some ML or deep learning.
 
-Get your documentation site running locally and make your first customization.
+<Tabs>
+  <Tab title="Just start reading">
+    Browse to any completed phase in the sidebar and start reading. Every lesson has a `docs/en.md` file with the full explanation, diagrams, and code walkthrough.
 
-### Step 1: Set up your local environment
+    Good starting points:
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+    - **New to AI:** [Phase 1: Math Foundations](/phases/phase-1-math) — linear algebra through optimization, all with Python code
+    - **Know ML basics:** [Phase 3: Deep Learning Core](/phases/phase-3-deep-learning) — backpropagation from scratch, then PyTorch
+    - **Want to build agents now:** [Phase 14: Agent Engineering](/phases/phase-14-agent-engineering) — the agent loop, tool dispatch, memory, and subagents
 
-### Step 2: Deploy your changes
+    <Note>
+    The reading path gives you the concepts but not the practice. The lessons are structured for active work — there are exercises and a build-from-scratch section in every lesson.
+    </Note>
+  </Tab>
+  <Tab title="Clone and run">
+    Clone the repository and run code from the first lesson to verify your environment is set up correctly.
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    <Steps>
+      <Step title="Clone the repository">
+        ```bash
+        git clone https://github.com/rohitg00/ai-engineering-from-scratch.git
+        cd ai-engineering-from-scratch
+        ```
+      </Step>
+      <Step title="Set up a Python environment">
+        The course uses Python 3.10+. Create a virtual environment to keep dependencies isolated.
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+        ```bash
+        python -m venv .venv
+        source .venv/bin/activate   # Windows: .venv\Scripts\activate
+        pip install numpy matplotlib
+        ```
+      </Step>
+      <Step title="Run your first lesson">
+        Start with Phase 1, Lesson 1 — linear algebra intuition. This file has no external dependencies beyond NumPy.
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+        ```bash
+        python phases/01-math-foundations/01-linear-algebra-intuition/code/vectors.py
+        ```
 
-### Step 3: Go live
+        If this runs without errors, your environment is ready for Phases 0 through 3. Later phases add dependencies (PyTorch, Anthropic SDK, etc.) per lesson.
+      </Step>
+      <Step title="Explore the outputs">
+        Each lesson saves reusable artifacts to its `outputs/` directory. For example, after working through the loss functions lesson:
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+        ```bash
+        ls phases/03-deep-learning-core/05-loss-functions/outputs/
+        # prompt-loss-function-selector.md
+        # prompt-loss-debugger.md
+        ```
 
-## Next steps
+        These prompts work immediately — paste them into Claude, ChatGPT, or any AI assistant to get expert-level help on loss function selection and debugging.
+      </Step>
+      <Step title="Check understanding after each phase">
+        After completing a phase, quiz yourself using the built-in Claude Code skill:
 
-Now that you have your docs running, explore these key features:
+        ```bash
+        # In Claude Code, after finishing Phase 3:
+        /check-understanding 3
+        ```
+
+        This generates 8 questions from the actual lesson content — 4 conceptual and 4 practical — and tells you which lessons to revisit based on your answers.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Find your level (recommended)">
+    If you already know some ML, deep learning, or LLM engineering, don't start from Phase 1. Use the placement quiz to skip phases you've already mastered.
+
+    <Steps>
+      <Step title="Open Claude Code in the repo directory">
+        ```bash
+        git clone https://github.com/rohitg00/ai-engineering-from-scratch.git
+        cd ai-engineering-from-scratch
+        # Open Claude Code here
+        ```
+      </Step>
+      <Step title="Run the placement skill">
+        ```bash
+        /find-your-level
+        ```
+
+        Claude Code will ask you 10 multiple-choice questions across 5 knowledge areas: math and statistics, classical ML, deep learning, NLP and transformers, and applied AI (RAG, agents).
+      </Step>
+      <Step title="Review your personalized path">
+        After the quiz, you receive a score breakdown and a full 20-phase table showing which phases to skip, which to review, and which to complete — with hour estimates for your actual path.
+
+        Example output for a score of 6/10:
+
+        ```
+        Math & Statistics:    2/2
+        Classical ML:         2/2
+        Deep Learning:        1/2
+        NLP & Transformers:   1/2
+        Applied AI:           0/2
+
+        Entry point: Phase 7 — Transformers Deep Dive
+        Your personalized path: ~130 hours across 12 phases.
+        ```
+      </Step>
+      <Step title="Start at your entry phase">
+        Jump directly to the recommended entry phase. The quiz identifies specific lessons to review in areas where you scored 1/2 rather than 2/2.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Prerequisites
+
+The course has minimal hard requirements. What matters is your intent.
+
+**You need:**
+- The ability to write code in any language (Python strongly preferred for early phases)
+- A working Python 3.10+ environment
+- The willingness to build things from scratch before reaching for frameworks
+
+**You do not need:**
+- A math or computer science degree
+- Prior ML experience (Phase 0 and Phase 1 cover what you need)
+- A GPU (most lessons through Phase 9 run on CPU; later phases note when GPU helps)
+
+**For Phase 14+ (agents and MCP):**
+- An Anthropic API key for lessons that call Claude
+- Node.js 18+ for TypeScript lessons
+
+<Info>
+TypeScript is used in Phases 13–16 for agent tooling and MCP server development. If you only know Python, these lessons include enough TypeScript context to follow along — but installing Node.js beforehand helps.
+</Info>
+
+## Language coverage by phase
+
+| Phases | Primary languages |
+|--------|-------------------|
+| 0–3 | Python |
+| 4–9 | Python |
+| 10–11 | Python |
+| 12 | Python |
+| 13–16 | TypeScript, Python |
+| 17 | Python, TypeScript, Rust |
+| 18–19 | Python, TypeScript |
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="How lessons work" icon="book-open" href="/how-lessons-work">
+    Understand the 6-step lesson structure and Build It / Use It approach before you start.
+  </Card>
+  <Card title="AI-native learning" icon="robot" href="/ai-native-learning">
+    Full guide to using `/find-your-level` and `/check-understanding` throughout the course.
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

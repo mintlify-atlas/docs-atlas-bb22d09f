@@ -1,0 +1,163 @@
+---
+title: 'Phase 7: Transformers Deep Dive (~14 hrs)'
+description: '14 lessons, ~14 hours. Implement self-attention, positional encoding, BERT, GPT, and MoE from scratch — then add KV cache, Flash Attention, and scaling laws.'
+keywords: ['transformers', 'self-attention', 'multi-head attention', 'BERT', 'GPT', 'positional encoding', 'RoPE', 'Flash Attention', 'KV cache', 'scaling laws', 'MoE']
+---
+
+The transformer architecture — introduced in "Attention Is All You Need" (2017) — replaced recurrence and convolution with a single mechanism: attention. Every dominant model today, from BERT and GPT to Whisper and Stable Diffusion, is built on this foundation. This phase implements every component from scratch in NumPy and Python before switching to PyTorch, so there is no hidden magic. Phase 7 is currently **in progress**: lesson 02 (self-attention) is complete.
+
+<Note>
+  **Status: 🚧 In Progress** — Lesson 02 (Self-Attention from Scratch) is ✅ complete. All remaining lessons are ⬚ planned. See the [roadmap](https://github.com/rohitg00/ai-engineering-from-scratch/blob/main/ROADMAP.md) for the latest progress.
+</Note>
+
+## Phase stats
+
+| Detail | Value |
+|--------|-------|
+| Lessons | 14 |
+| Estimated time | ~14 hours |
+| Status | 🚧 In Progress |
+| Languages | Python, Rust (lesson 12 — KV cache & inference) |
+| Prerequisites | Phase 3 — Deep Learning Core; Phase 5 lessons 9–10 (seq2seq, attention) |
+
+## Lessons
+
+| # | Lesson | Type | Lang | Status |
+|:---:|--------|:----:|------|:------:|
+| 01 | Why Transformers: The Problems with RNNs | Learn | — | ⬚ |
+| 02 | Self-Attention from Scratch | Build | 🐍 | ✅ |
+| 03 | Multi-Head Attention | Build | 🐍 | ⬚ |
+| 04 | Positional Encoding: Sinusoidal, RoPE, ALiBi | Build | 🐍 | ⬚ |
+| 05 | The Full Transformer: Encoder + Decoder | Build | 🐍 | ⬚ |
+| 06 | BERT — Masked Language Modeling | Build | 🐍 | ⬚ |
+| 07 | GPT — Causal Language Modeling | Build | 🐍 | ⬚ |
+| 08 | T5, BART — Encoder-Decoder Models | Build | 🐍 | ⬚ |
+| 09 | Vision Transformers (ViT) | Build | 🐍 | ⬚ |
+| 10 | Audio Transformers — Whisper Architecture | Build | 🐍 | ⬚ |
+| 11 | Mixture of Experts (MoE) | Build | 🐍 | ⬚ |
+| 12 | KV Cache, Flash Attention & Inference Optimization | Build | 🐍 🦀 | ⬚ |
+| 13 | Scaling Laws | Learn | 🐍 | ⬚ |
+| 14 | Build a Transformer from Scratch — The Capstone | Build | 🐍 | ⬚ |
+
+## Key techniques and architectures
+
+<CardGroup cols={2}>
+  <Card title="Attention mechanisms" icon="arrows-to-dot">
+    Scaled dot-product self-attention, multi-head attention with parallel heads, causal (autoregressive) masking, and cross-attention between encoder and decoder.
+  </Card>
+  <Card title="Positional encoding" icon="list-ol">
+    Sinusoidal encodings from the original paper; Rotary Position Embedding (RoPE) used by LLaMA and Mistral; ALiBi linear bias for length generalization.
+  </Card>
+  <Card title="Model families" icon="code-branch">
+    BERT (encoder-only, masked LM), GPT (decoder-only, causal LM), T5/BART (encoder-decoder), ViT (patch-based vision), Whisper (audio encoder-decoder), and MoE routing.
+  </Card>
+  <Card title="Inference optimization" icon="bolt">
+    KV caching to avoid recomputing keys/values; Flash Attention's memory-efficient tiled SGEMM; scaling laws relating compute, data, and model size to loss.
+  </Card>
+</CardGroup>
+
+## What you'll build
+
+By the end of this phase you will have shipped:
+
+- A complete self-attention module in NumPy with Q/K/V projections, scaling, and an ASCII attention heatmap (lesson 02, already complete)
+- A multi-head attention layer that splits and recombines `n_heads` parallel attention streams
+- A sinusoidal positional encoding module, plus a RoPE implementation
+- A full transformer encoder-decoder with layer normalization and feed-forward sublayers
+- A BERT-style masked language model pre-training loop
+- A GPT-style causal language model with autoregressive generation
+- A ViT that converts 16×16 image patches into token sequences for classification
+- A KV-cache implementation that halves inference memory on long sequences
+- A complete transformer built from scratch as the lesson 14 capstone
+
+## Prerequisites
+
+<Tabs>
+  <Tab title="Required">
+    **Phase 3 — Deep Learning Core** (all 13 lessons): you need PyTorch, backpropagation, and training loops. **Phase 5 lessons 9–10** (seq2seq and the attention mechanism): the pre-transformer attention paper is the conceptual bridge to lesson 01.
+  </Tab>
+  <Tab title="Recommended">
+    **Phase 1 lessons 1–3** (linear algebra): every transformer operation is a matrix multiplication. Understanding how shapes transform through `@` is essential for debugging attention.
+  </Tab>
+</Tabs>
+
+## Core concept: self-attention from scratch
+
+Self-attention lets every position in a sequence attend to every other position in a single parallel step. This is the lesson that is already complete in the course — the code below is taken directly from the source.
+
+The key formula: `Attention(Q, K, V) = softmax(Q @ K^T / sqrt(dk)) @ V`
+
+```python
+import numpy as np
+
+def softmax(x):
+    shifted = x - np.max(x, axis=-1, keepdims=True)
+    exp_x = np.exp(shifted)
+    return exp_x / np.sum(exp_x, axis=-1, keepdims=True)
+
+def scaled_dot_product_attention(Q, K, V):
+    dk = Q.shape[-1]
+    scores = Q @ K.T / np.sqrt(dk)   # scale prevents softmax saturation
+    weights = softmax(scores)         # (n, n) probability distribution
+    output = weights @ V              # weighted sum of value vectors
+    return output, weights
+
+class SelfAttention:
+    def __init__(self, d_model, dk, dv, seed=42):
+        rng = np.random.default_rng(seed)
+        scale_qk = np.sqrt(2.0 / (d_model + dk))
+        self.Wq = rng.normal(0, scale_qk, (d_model, dk))
+        self.Wk = rng.normal(0, scale_qk, (d_model, dk))
+        scale_v = np.sqrt(2.0 / (d_model + dv))
+        self.Wv = rng.normal(0, scale_v, (d_model, dv))
+
+    def forward(self, X):
+        Q = X @ self.Wq   # (n, dk) — "what am I looking for?"
+        K = X @ self.Wk   # (n, dk) — "what do I contain?"
+        V = X @ self.Wv   # (n, dv) — "what do I offer?"
+        return scaled_dot_product_attention(Q, K, V)
+```
+
+### How the attention matrix reads
+
+```
+              k1    k2    k3    k4    k5
+        +-----+-----+-----+-----+-----+
+   q1   | 2.1 | 0.3 | 0.1 | 0.8 | 0.2 |   ← how much token 1 attends to each key
+        +-----+-----+-----+-----+-----+
+   q2   | 0.4 | 1.9 | 0.7 | 0.1 | 0.3 |
+        +-----+-----+-----+-----+-----+
+   q3   | 0.2 | 0.6 | 2.3 | 0.5 | 0.1 |
+        +-----+-----+-----+-----+-----+
+
+Each row sums to 1.0 after softmax.
+High diagonal = each token attends mostly to itself.
+Off-diagonal weights capture cross-token relationships.
+```
+
+### Why divide by sqrt(dk)?
+
+Dot products grow with dimension. At `dk = 64`, raw scores reach values that push softmax into saturation — a region where all gradients vanish. Dividing by `sqrt(dk)` normalizes the variance and keeps softmax in a useful gradient range.
+
+### Multi-head attention
+
+Multi-head attention runs `n_heads` parallel self-attention functions, each with its own learned projections of size `dk = d_model / n_heads`, then concatenates and projects the results. This lets the model simultaneously attend to different kinds of relationships — syntactic structure, coreference, semantic similarity — in the same forward pass.
+
+```python
+class MultiHeadSelfAttention:
+    def __init__(self, d_model, n_heads, seed=42):
+        assert d_model % n_heads == 0
+        self.dk = d_model // n_heads
+        self.heads = [
+            SelfAttention(d_model, self.dk, self.dk, seed=seed + i)
+            for i in range(n_heads)
+        ]
+        rng = np.random.default_rng(seed + n_heads)
+        scale = np.sqrt(2.0 / (d_model * 2))
+        self.Wo = rng.normal(0, scale, (n_heads * self.dk, d_model))
+
+    def forward(self, X):
+        outputs, weights = zip(*[h.forward(X) for h in self.heads])
+        concatenated = np.concatenate(outputs, axis=-1)
+        return concatenated @ self.Wo, list(weights)
+```

@@ -1,0 +1,135 @@
+---
+title: 'Phase 6: Speech & Audio Processing (~13 hrs)'
+description: '12 lessons, ~13 hours. Build audio AI from waveform fundamentals through ASR, Whisper fine-tuning, TTS, voice cloning, and a complete voice assistant pipeline.'
+keywords: ['speech recognition', 'ASR', 'Whisper', 'TTS', 'voice cloning', 'spectrogram', 'audio processing', 'music generation', 'real-time audio']
+---
+
+Sound is information. Audio AI spans the full range from recognizing a speaker's identity and transcribing their words, to synthesizing natural speech, cloning voices, and generating music. This phase covers the signal processing foundations — waveforms, Fourier transforms, mel spectrograms — before moving through automatic speech recognition (ASR), text-to-speech (TTS), and the transformer-based models that now dominate each task. Rust is used in lesson 11 for the real-time constraints that Python cannot meet.
+
+<Note>
+  **Status: ⬚ Planned** — This phase is fully scoped. See the [roadmap](https://github.com/rohitg00/ai-engineering-from-scratch/blob/main/ROADMAP.md) for the latest progress.
+</Note>
+
+## Phase stats
+
+| Detail | Value |
+|--------|-------|
+| Lessons | 12 |
+| Estimated time | ~13 hours |
+| Status | ⬚ Planned |
+| Languages | Python, Rust (real-time processing) |
+| Prerequisites | Phase 3 — Deep Learning Core, Phase 1 lesson 20 (Fourier Transform) |
+
+## Lessons
+
+| # | Lesson | Type | Lang | Status |
+|:---:|--------|:----:|------|:------:|
+| 01 | Audio Fundamentals: Waveforms, Sampling, Fourier Transform | Learn | 🐍 | ⬚ |
+| 02 | Spectrograms, Mel Scale & Audio Features | Build | 🐍 | ⬚ |
+| 03 | Audio Classification | Build | 🐍 | ⬚ |
+| 04 | Speech Recognition (ASR) | Build | 🐍 | ⬚ |
+| 05 | Whisper: Architecture & Fine-Tuning | Build | 🐍 | ⬚ |
+| 06 | Speaker Recognition & Verification | Build | 🐍 | ⬚ |
+| 07 | Text-to-Speech (TTS) | Build | 🐍 | ⬚ |
+| 08 | Voice Cloning & Voice Conversion | Build | 🐍 | ⬚ |
+| 09 | Music Generation | Build | 🐍 | ⬚ |
+| 10 | Audio-Language Models | Build | 🐍 | ⬚ |
+| 11 | Real-Time Audio Processing | Build | 🐍 🦀 | ⬚ |
+| 12 | Build a Voice Assistant Pipeline | Build | 🐍 | ⬚ |
+
+## Key techniques and architectures
+
+<CardGroup cols={2}>
+  <Card title="Signal processing foundations" icon="wave-square">
+    Discrete Fourier Transform (DFT), Short-Time Fourier Transform (STFT), mel filterbanks, and MFCCs — the feature representations that feed every audio model.
+  </Card>
+  <Card title="Speech recognition" icon="microphone">
+    CTC-based ASR built from scratch; Whisper's encoder-decoder transformer architecture; fine-tuning Whisper on domain-specific audio with HuggingFace.
+  </Card>
+  <Card title="Speech synthesis" icon="volume-high">
+    Tacotron 2 and FastSpeech TTS architectures; neural vocoders (WaveNet, HiFi-GAN); voice cloning with speaker embeddings and d-vectors.
+  </Card>
+  <Card title="Generative audio" icon="music">
+    Transformer-based music generation with discrete audio tokens; audio-language models that bridge text and sound; real-time streaming with Rust for sub-20 ms latency.
+  </Card>
+</CardGroup>
+
+## What you'll build
+
+By the end of this phase you will have shipped:
+
+- A mel spectrogram extractor and audio feature pipeline from raw `.wav` files
+- An audio classification model distinguishing instrument types or environmental sounds
+- A CTC-based ASR model trained on a speech corpus
+- A Whisper fine-tuning script for a specialized domain (medical, legal, or noisy environments)
+- A speaker verification system using cosine similarity on d-vector embeddings
+- A TTS system that synthesizes intelligible speech from text
+- A voice cloning demo using a 5-second speaker reference clip
+- A music generation model conditioned on genre or instrument prompts
+- A real-time audio processing pipeline in Rust with round-trip latency under 20 ms
+- A complete voice assistant: mic → ASR → LLM → TTS → speaker (lesson 12 capstone)
+
+## Prerequisites
+
+<Tabs>
+  <Tab title="Required">
+    **Phase 3 — Deep Learning Core**: RNNs, attention basics, and PyTorch are all used heavily. **Phase 1 lesson 20** (The Fourier Transform) is essential for understanding spectrograms and why the frequency domain matters for audio.
+  </Tab>
+  <Tab title="Recommended">
+    **Phase 5 — NLP** (lessons 9–10, seq2seq and attention): Whisper is an encoder-decoder transformer whose architecture closely parallels neural machine translation. Understanding seq2seq first makes lesson 5 significantly faster.
+  </Tab>
+</Tabs>
+
+## Core concept: the mel spectrogram
+
+Raw audio waveforms are hard to learn from directly. The mel spectrogram converts a waveform into a 2D time-frequency image that reflects how the human ear perceives pitch — making it the standard input feature for most speech and audio models.
+
+```python
+import numpy as np
+
+def stft(signal, n_fft=512, hop_length=128, window=None):
+    """Short-Time Fourier Transform — the building block of spectrograms."""
+    if window is None:
+        window = np.hanning(n_fft)
+
+    n_frames = 1 + (len(signal) - n_fft) // hop_length
+    spectrogram = np.zeros((n_fft // 2 + 1, n_frames), dtype=complex)
+
+    for t in range(n_frames):
+        start = t * hop_length
+        frame = signal[start:start + n_fft] * window
+        spectrogram[:, t] = np.fft.rfft(frame)
+
+    return spectrogram
+
+def mel_filterbank(n_filters, n_fft, sr, f_min=0, f_max=None):
+    """Build a mel filterbank matrix: (n_filters, n_fft // 2 + 1)."""
+    if f_max is None:
+        f_max = sr / 2
+
+    # Convert Hz to mel
+    mel_min = 2595 * np.log10(1 + f_min / 700)
+    mel_max = 2595 * np.log10(1 + f_max / 700)
+    mel_points = np.linspace(mel_min, mel_max, n_filters + 2)
+    hz_points = 700 * (10 ** (mel_points / 2595) - 1)
+
+    bins = np.floor((n_fft + 1) * hz_points / sr).astype(int)
+    fbank = np.zeros((n_filters, n_fft // 2 + 1))
+
+    for m in range(1, n_filters + 1):
+        f_left, f_center, f_right = bins[m - 1], bins[m], bins[m + 1]
+        for k in range(f_left, f_center):
+            fbank[m - 1, k] = (k - f_left) / (f_center - f_left)
+        for k in range(f_center, f_right):
+            fbank[m - 1, k] = (f_right - k) / (f_right - f_center)
+
+    return fbank
+
+def mel_spectrogram(signal, sr=16000, n_fft=512, hop_length=128, n_mels=80):
+    S = np.abs(stft(signal, n_fft, hop_length)) ** 2
+    mel_fb = mel_filterbank(n_mels, n_fft, sr)
+    mel_S = mel_fb @ S
+    return np.log(mel_S + 1e-9)  # log scale; shape: (n_mels, n_frames)
+```
+
+Whisper takes exactly this representation — an 80-channel log-mel spectrogram — as its encoder input, treating it as a 2D image processed through convolutional layers before the transformer stack.

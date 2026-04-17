@@ -1,0 +1,142 @@
+---
+title: "Phase 0: Dev Environment & Tooling Setup"
+description: "12 lessons, ~14 hours. Configure GPU access, Python environments, Docker, Jupyter, and debugging tools for a professional AI development environment."
+keywords: ["dev environment", "GPU setup", "Docker", "Jupyter", "Python environments", "AI tooling", "setup"]
+sidebarTitle: "Phase 0: Setup & Tooling"
+---
+
+Phase 0 is the foundation that every subsequent lesson depends on. Before writing a single neural network layer, you need a reproducible, professional-grade development environment. These 12 lessons walk you through every layer of the modern AI developer's stack — from terminal and Linux basics through GPU provisioning, containerized workflows, and Python dependency management. By the end, your machine (or cloud instance) will be configured exactly as it is throughout all 260+ lessons of the course.
+
+<Note>
+All 12 Phase 0 lessons are complete (✅). You can work through them at any pace — each lesson stands alone and produces a working setup artifact.
+</Note>
+
+## Phase overview
+
+| Stat | Value |
+|------|-------|
+| Lessons | 12 |
+| Estimated time | ~14 hours |
+| Status | ✅ Complete |
+| Languages | Python, TypeScript, Rust |
+| Lesson types | 9 Build · 3 Learn |
+
+## Lesson catalog
+
+| # | Lesson | Type | Languages | Status | Est. |
+|:---:|--------|:----:|-----------|:------:|------|
+| 01 | Dev Environment | Build | Python, TypeScript, Rust | ✅ | ~75 min |
+| 02 | Git & Collaboration | Learn | — | ✅ | ~45 min |
+| 03 | GPU Setup & Cloud | Build | Python | ✅ | ~75 min |
+| 04 | APIs & Keys | Build | Python, TypeScript | ✅ | ~75 min |
+| 05 | Jupyter Notebooks | Build | Python | ✅ | ~75 min |
+| 06 | Python Environments | Build | Python | ✅ | ~75 min |
+| 07 | Docker for AI | Build | Python | ✅ | ~75 min |
+| 08 | Editor Setup | Build | — | ✅ | ~75 min |
+| 09 | Data Management | Build | Python | ✅ | ~75 min |
+| 10 | Terminal & Shell | Learn | — | ✅ | ~45 min |
+| 11 | Linux for AI | Learn | — | ✅ | ~45 min |
+| 12 | Debugging & Profiling | Build | Python | ✅ | ~75 min |
+
+<Tabs>
+  <Tab title="Build lessons (9)">
+    Build lessons end with a working implementation you can run immediately. Phase 0 Build lessons produce configured tools and environments:
+
+    - **01 – Dev Environment**: A fully configured workstation with all required runtimes installed and verified.
+    - **03 – GPU Setup & Cloud**: A cloud GPU instance provisioned and connected, with CUDA verified.
+    - **04 – APIs & Keys**: Secure `.env`-based key management pattern reused across all phases.
+    - **05 – Jupyter Notebooks**: A Jupyter environment with AI/ML kernel and extensions ready.
+    - **06 – Python Environments**: Isolated virtual environments via `venv` and `conda` for every project.
+    - **07 – Docker for AI**: A Dockerfile and `docker-compose.yml` for reproducible AI workloads.
+    - **08 – Editor Setup**: VS Code or Neovim configured with AI extensions, linters, and formatters.
+    - **09 – Data Management**: A data versioning and organization pattern using DVC and local storage.
+    - **12 – Debugging & Profiling**: A Python profiling workflow using `cProfile`, `line_profiler`, and `py-spy`.
+  </Tab>
+  <Tab title="Learn lessons (3)">
+    Learn lessons build conceptual understanding and system fluency — they don't require you to write code, but do require you to engage with the material:
+
+    - **02 – Git & Collaboration**: Git internals, branching models, rebase vs. merge, and the collaboration workflow used throughout the course.
+    - **10 – Terminal & Shell**: Shell scripting, environment variables, process management, and piping — the daily driver for every AI engineer.
+    - **11 – Linux for AI**: Filesystem layout, permissions, systemd, GPU drivers, and SSH — what you need when running on a remote server.
+  </Tab>
+</Tabs>
+
+## Key concepts
+
+<CardGroup cols={2}>
+  <Card title="Reproducible environments" icon="box">
+    Virtual environments (`venv`, `conda`) and Docker containers ensure your code runs identically on every machine, cloud instance, or CI runner.
+  </Card>
+  <Card title="GPU provisioning" icon="microchip">
+    Setting up CUDA, selecting cloud GPU instances (AWS, GCP, Lambda Labs), and verifying driver compatibility before Phase 3's neural network training.
+  </Card>
+  <Card title="Secure API management" icon="key">
+    Storing secrets in `.env` files, loading them with `python-dotenv`, and never committing keys to version control — a pattern used across every phase that calls an AI API.
+  </Card>
+  <Card title="Debugging & profiling" icon="bug">
+    Using `pdb`, `ipdb`, `cProfile`, `line_profiler`, and `py-spy` to find performance bottlenecks — critical when training loops are slow or models produce unexpected outputs.
+  </Card>
+</CardGroup>
+
+## What you'll ship from this phase
+
+Every lesson produces a reusable artifact. From Phase 0 you'll have:
+
+- A **`Dockerfile` and `docker-compose.yml`** for AI workloads, reusable across all phases
+- A **`.env` key management template** compatible with every API lesson
+- A **Python environment setup script** that installs the full course dependency stack
+- A **profiling toolkit** (`profile.py`) ready to plug into any training loop
+
+```bash
+# Verify your Phase 0 setup is complete
+python --version        # 3.10+
+nvidia-smi              # GPU visible
+docker run hello-world  # Docker working
+jupyter --version       # Jupyter installed
+```
+
+## Getting started with Phase 0
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/rohitg00/ai-engineering-from-scratch.git
+    cd ai-engineering-from-scratch
+    ```
+  </Step>
+  <Step title="Open the first lesson">
+    ```bash
+    cd phases/00-setup-and-tooling/01-dev-environment
+    cat docs/en.md
+    ```
+    Read the lesson doc, then follow the Build It steps.
+  </Step>
+  <Step title="Install the base requirements">
+    ```bash
+    python -m venv .venv
+    source .venv/bin/activate   # Windows: .venv\Scripts\activate
+    pip install -r requirements.txt
+    ```
+  </Step>
+  <Step title="Work through lessons 02–12 in order">
+    Each lesson builds on the previous one. Complete them in sequence to arrive at a fully configured environment by lesson 12.
+  </Step>
+  <Step title="Check your understanding">
+    Use the built-in Claude Code skill to quiz yourself before moving to Phase 1:
+    ```
+    /check-understanding 0
+    ```
+  </Step>
+</Steps>
+
+## Prerequisites
+
+Phase 0 has no prerequisites — it is the starting point. You need:
+
+- A computer (macOS, Linux, or Windows with WSL2)
+- The ability to write code in any language
+- An internet connection for cloud GPU setup (lesson 03)
+
+## What comes next
+
+After completing Phase 0, proceed to [Phase 1: Math Foundations](/phases/phase-1-math) — 22 lessons covering the linear algebra, calculus, probability, and optimization that underpin every AI algorithm.

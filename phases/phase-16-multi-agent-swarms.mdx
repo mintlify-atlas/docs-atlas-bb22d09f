@@ -1,0 +1,171 @@
+---
+title: 'Phase 16: Multi-Agent & Swarms — Coordination at Scale'
+description: 'Build multi-agent systems using pipelines, orchestration, swarm patterns, communication protocols (MCP, A2A, ACP, ANP), and DAG-based coordination.'
+keywords: ['multi-agent', 'swarms', 'agent communication', 'A2A protocol', 'MCP', 'orchestrator', 'swarm intelligence', 'DAG orchestration']
+---
+
+Phase 16 addresses what happens when a single agent is not enough. You learn why multi-agent architectures exist, how to coordinate agents through messages and shared state, how real-world communication protocols (MCP, A2A, ACP, ANP) work at the wire level, and how to build a fully autonomous agent swarm.
+
+<Note>
+  **Status: In progress (🚧)** — 14 lessons, ~15 hours. Lessons 01 (Why Multi-Agent) and 03 (Communication Protocols) are complete. Check the [ROADMAP](https://github.com/rohitg00/ai-engineering-from-scratch/blob/main/ROADMAP.md) for progress on remaining lessons.
+</Note>
+
+## Lesson table
+
+| # | Lesson | Status | Est. | Lang |
+|:---:|--------|:------:|------|------|
+| 01 | Why Multi-Agent | ✅ | ~45 min | TypeScript |
+| 02 | Agent Teams: Roles & Delegation | ⬚ | ~75 min | TypeScript |
+| 03 | Communication Protocols | ✅ | ~45 min | TypeScript |
+| 04 | Shared State & Coordination | ⬚ | ~75 min | TypeScript, Rust |
+| 05 | Message Passing & Mailboxes | ⬚ | ~75 min | TypeScript |
+| 06 | Task Markets | ⬚ | ~45 min | TypeScript |
+| 07 | Consensus Algorithms | ⬚ | ~75 min | TypeScript, Rust |
+| 08 | Swarm Intelligence | ⬚ | ~45 min | Python, TypeScript |
+| 09 | Agent Economies | ⬚ | ~45 min | TypeScript |
+| 10 | Worktree Isolation | ⬚ | ~75 min | TypeScript |
+| 11 | Hierarchical Swarms | ⬚ | ~45 min | TypeScript |
+| 12 | Self-Organizing Systems | ⬚ | ~45 min | TypeScript, Rust |
+| 13 | DAG-Based Orchestration | ⬚ | ~75 min | TypeScript, Rust |
+| 14 | Build an Autonomous Swarm | ⬚ | ~120 min | TypeScript, Rust |
+
+## Why multi-agent — lesson 01 (complete)
+
+> One agent hits a wall. The smart move is not a bigger agent — it is more agents.
+
+A single agent is one loop, one context window, one system prompt. Three things break when tasks grow large:
+
+1. **Context saturation** — tool results pile up. By turn 30, the agent has consumed 150k tokens of file contents, command outputs, and prior reasoning. Critical details from turn 5 get lost.
+2. **Role confusion** — a system prompt that says "you are a researcher, coder, reviewer, and tester" produces an agent that half-researches, half-codes, and never finishes reviewing.
+3. **Sequential bottleneck** — the agent reads file A, then file B, then file C. No parallelism.
+
+**The multi-agent solution:** give each agent one job, one clean context window, and one system prompt tuned for that job.
+
+### The four patterns
+
+<CardGroup cols={2}>
+  <Card title="Pipeline" icon="arrow-right">
+    Agents run in sequence. Each transforms the data and passes it forward: research → code → review → test. Simple to reason about; failure in one stage blocks the rest.
+  </Card>
+  <Card title="Fan-out / Fan-in" icon="git-merge">
+    Split work across parallel agents, then merge results. Good for tasks that decompose into independent subtasks (reading multiple files simultaneously, parallel web searches).
+  </Card>
+  <Card title="Orchestrator-Worker" icon="sitemap">
+    A smart orchestrator decides what to do and delegates to workers. The orchestrator is itself an agent whose tools include spawning workers. Used by Claude Code's subagent system.
+  </Card>
+  <Card title="Peer Swarm" icon="share-2">
+    No central orchestrator. Agents communicate peer-to-peer via shared state or a message bus. Decisions emerge from interactions. Harder to debug but scales to many agents.
+  </Card>
+</CardGroup>
+
+**When not to use multi-agent:** if a task takes fewer than 20 tool calls and fits in 100k tokens, keep it single-agent. Every agent boundary is a lossy compression step. Coordination logic is its own source of bugs.
+
+## Communication protocols — lesson 03 (complete)
+
+The AI ecosystem has converged on four protocols for agent communication, each solving a different problem:
+
+| Protocol | Created by | Primary use | Key feature |
+|----------|-----------|-------------|-------------|
+| **MCP** | Anthropic | Agent to tool | Tool discovery, execution, context sharing |
+| **A2A** | Google / Linux Foundation | Agent to agent | Agent Cards, 9-state task lifecycle, streaming |
+| **ACP** | IBM / BeeAI | Agent to agent (enterprise) | TrajectoryMetadata audit trail |
+| **ANP** | Community | Cross-org trust | `did:wba` DID identity, E2EE, meta-protocol negotiation |
+
+### MCP (Model Context Protocol)
+
+MCP standardizes how an LLM connects to external tools and data sources. It is a client-server protocol: the agent (client) discovers and calls tools exposed by a server. Covered in depth in Phase 13.
+
+### A2A (Agent2Agent Protocol)
+
+A2A handles peer-to-peer agent collaboration. Each agent publishes an **Agent Card** at `/.well-known/agent-card.json` describing its skills, supported MIME types, and security requirements. Other agents discover, negotiate with, and delegate tasks to it.
+
+```json
+{
+  "name": "Research Agent",
+  "description": "Searches documentation and summarizes findings",
+  "version": "1.0.0",
+  "capabilities": { "streaming": true, "pushNotifications": false },
+  "skills": [
+    {
+      "id": "web-research",
+      "name": "Web Research",
+      "tags": ["research", "search", "summarization"],
+      "inputModes": ["text/plain"],
+      "outputModes": ["application/json"]
+    }
+  ]
+}
+```
+
+Tasks move through a defined state machine: `submitted → working → completed` (or `failed`, `canceled`, `rejected`). Once a task reaches a terminal state, it is immutable.
+
+### ACP (Agent Communication Protocol)
+
+ACP is the enterprise protocol. Its key differentiator is **TrajectoryMetadata**: every agent response carries the full chain of reasoning and tool calls that produced it.
+
+```json
+{
+  "role": "agent/researcher",
+  "parts": [{
+    "content_type": "text/plain",
+    "content": "The weather in San Francisco is 72F and sunny.",
+    "metadata": {
+      "kind": "trajectory",
+      "tool_name": "weather_api",
+      "tool_input": { "location": "San Francisco, CA" },
+      "tool_output": { "temperature": 72, "condition": "sunny" }
+    }
+  }]
+}
+```
+
+For regulated industries, this is essential: every answer comes with a provable chain of evidence.
+
+### ANP (Agent Network Protocol)
+
+ANP solves cross-organizational trust without a central authority. Agents prove identity using W3C Decentralized Identifiers (`did:wba`) and end-to-end encryption (HPKE, RFC 9180).
+
+ANP's most novel feature is **meta-protocol negotiation**: two agents from different ecosystems negotiate their communication format in natural language (max 10 rounds), then dynamically generate code to handle the agreed format.
+
+### How the protocols fit together
+
+A realistic enterprise system uses all four:
+
+- **MCP** connects each agent to its tools
+- **A2A** handles collaboration between agents
+- **ACP** wraps responses in trajectory metadata for auditability
+- **ANP** provides identity verification for agents outside your organization
+
+## Later lessons: coordination primitives
+
+<CardGroup cols={2}>
+  <Card title="Shared state (lesson 04)" icon="database">
+    CRDT-based shared state for agents that need to read and write the same data without conflicts. Rust provides safe concurrent access.
+  </Card>
+  <Card title="Task markets (lesson 06)" icon="shopping-cart">
+    Agents bid on tasks from a shared queue based on their current load and capabilities. Dynamic work allocation without a central scheduler.
+  </Card>
+  <Card title="Consensus algorithms (lesson 07)" icon="check-circle">
+    Raft-based consensus for decisions that require agreement from multiple agents before proceeding. Covers leader election and conflict resolution.
+  </Card>
+  <Card title="Worktree isolation (lesson 10)" icon="git-branch">
+    Each agent works in a separate git worktree — its own branch, its own filesystem view. Changes are merged only when the agent's work is validated.
+  </Card>
+  <Card title="Hierarchical swarms (lesson 11)" icon="layers">
+    Swarms of swarms: a top-level orchestrator coordinates sub-swarms, each with their own internal coordination. Scales to hundreds of agents.
+  </Card>
+  <Card title="DAG orchestration (lesson 13)" icon="share">
+    Express agent work as a directed acyclic graph. Agents run in topological order; independent nodes run in parallel. Maximum parallelism, correct ordering.
+  </Card>
+</CardGroup>
+
+## Languages
+
+- TypeScript — agent coordination, communication protocols, orchestration
+- Python — swarm intelligence simulations
+- Rust — shared state, consensus algorithms, DAG orchestration, high-throughput message routing
+
+## Prerequisites
+
+- Phase 14 (Agent Engineering) — the agent loop, subagents, error recovery
+- Phase 13 (Tools & Protocols) — MCP fundamentals

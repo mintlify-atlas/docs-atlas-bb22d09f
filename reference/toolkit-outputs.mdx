@@ -1,0 +1,221 @@
+---
+title: "The Toolkit: Prompts, Skills, Agents & MCP Servers"
+description: "Every lesson ships a reusable artifact. Learn how to use prompts, install skills, deploy agents, and connect MCP servers from the course toolkit."
+keywords: ["AI prompts", "Claude Code skills", "AI agents", "MCP servers", "course toolkit", "reusable artifacts"]
+---
+
+Other courses end with theory. This one ends every lesson with a tool you can use immediately. The toolkit is the collection of all artifacts produced across the 260+ lessons: prompts you paste into any AI assistant, skills you install into Claude Code or Cursor, agents you deploy as autonomous workers, and MCP servers you plug into any compatible AI application.
+
+## What the toolkit is
+
+Each lesson follows a six-step structure. The final step, "Ship It," produces one or more reusable artifacts:
+
+<CardGroup cols={2}>
+  <Card title="Prompts" icon="file-lines">
+    Expert-level instruction templates. Paste into ChatGPT, Claude, Gemini, or any AI assistant to get specialist-quality help on a specific AI engineering topic.
+  </Card>
+  <Card title="Skills" icon="cards-blank">
+    Instruction files that give an AI coding agent (Claude Code, Cursor, Windsurf) domain expertise for a specific task. Loaded once, used across sessions.
+  </Card>
+  <Card title="Agents" icon="user-robot">
+    Autonomous workers built to handle a specific repeatable task end-to-end — debugging training runs, evaluating outputs, searching papers, and more.
+  </Card>
+  <Card title="MCP Servers" icon="plug">
+    JSON-RPC servers that expose tools, resources, and prompts to any MCP-compatible application. Drop into Claude Desktop, Continue, or any MCP client.
+  </Card>
+</CardGroup>
+
+## Directory structure
+
+All finalized artifacts are aggregated in the top-level `outputs/` directory of the repository:
+
+```text
+outputs/
+├── index.json          # Machine-readable index of all artifacts
+├── prompts/            # Prompt templates (.md files with YAML frontmatter)
+├── skills/             # Skill instruction files
+├── agents/             # Agent definitions and harnesses
+└── mcp-servers/        # MCP server implementations
+```
+
+Individual lessons also keep their outputs in the lesson folder itself, which is the canonical source:
+
+```text
+phases/03-deep-learning-core/05-loss-functions/outputs/
+├── prompt-loss-debugger.md
+└── prompt-loss-function-selector.md
+```
+
+<Note>
+The `outputs/index.json` file tracks all published artifacts with their version, phase, lesson, and type. Its structure is `{"version": "1.0.0", "prompts": [], "skills": [], "agents": [], "mcp_servers": []}`. As the course grows, each artifact gets an entry here so tooling can discover and install them programmatically.
+</Note>
+
+## Prompt format
+
+Every prompt file uses YAML frontmatter to describe itself, followed by the prompt body:
+
+```markdown
+---
+name: prompt-loss-debugger
+description: A diagnostic prompt for debugging loss curves and training failures
+phase: 03
+lesson: 05
+---
+
+You are an expert ML debugger. Given a description of a loss curve or
+training behavior, diagnose the problem and recommend a fix.
+...
+```
+
+## Skill format
+
+Skills use a richer frontmatter with tags and versioning:
+
+```markdown
+---
+name: skill-name
+description: What this skill teaches the AI agent
+version: 1.0.0
+phase: 14
+lesson: 01
+tags: [agents, loops]
+---
+
+[Skill instructions here]
+```
+
+## How to use prompts
+
+1. Open the prompt file in the `outputs/prompts/` directory or the lesson's `outputs/` folder.
+2. Copy everything after the YAML frontmatter (the `---` block).
+3. Paste it as a system prompt or the first message in any AI assistant.
+4. The prompt is self-contained — it includes the context, rules, and output format the model needs.
+
+### Example: Loss function debugging
+
+The Phase 3, Lesson 5 lesson on loss functions ships two prompts. The loss debugger prompt handles training failures:
+
+```markdown
+You are an expert ML debugger. Given a description of a loss curve or
+training behavior, diagnose the problem and recommend a fix.
+
+Common patterns and their causes:
+
+**Loss is NaN or infinity:**
+- log(0) in cross-entropy: Add epsilon clipping (max(eps, prediction))
+- Exploding gradients: Add gradient clipping (max_norm=1.0)
+- Learning rate too high: Reduce by 10x
+...
+```
+
+The loss function selector prompt helps you choose the right loss function for any task — regression vs. classification vs. representation learning, balanced vs. imbalanced data, and so on.
+
+## How to install skills
+
+Skills give an AI coding agent persistent domain expertise for a session or project.
+
+**Claude Code:**
+```bash
+# Install from a local file
+claude --add-skill ./outputs/skills/skill-name.md
+
+# Or place the skill file in your project's .claude/skills/ directory
+cp outputs/skills/skill-name.md .claude/skills/
+```
+
+**Cursor / Windsurf:**
+
+Place the skill `.md` file in the `.cursorrules` file or your project's rules directory. The agent reads it at the start of each session.
+
+**Manual install:**
+Copy the skill content into your AI assistant's system prompt or persistent instruction field. Skills are plain Markdown — they work anywhere you can set a system prompt.
+
+## How to deploy agents
+
+Agents in this course are self-contained programs with an LLM decision loop. Each agent includes:
+
+- A harness that manages the loop and tool dispatch
+- A set of tools the agent can invoke
+- A system prompt defining its role and constraints
+
+```bash
+# Clone the repo
+git clone https://github.com/rohitg00/ai-engineering-from-scratch
+
+# Navigate to the agent
+cd outputs/agents/<agent-name>
+
+# Install dependencies (varies by agent)
+pip install -r requirements.txt   # Python agents
+npm install                        # TypeScript agents
+
+# Set your API key
+export ANTHROPIC_API_KEY=your-key-here
+
+# Run
+python agent.py   # or node agent.js
+```
+
+Each agent's directory contains a `README.md` with specific setup instructions, required environment variables, and example usage.
+
+## How to use MCP servers
+
+MCP servers expose tools, resources, and prompts to any MCP-compatible client using the [Model Context Protocol](https://github.com/rohitg00/ai-engineering-from-scratch/blob/main/glossary/terms.md).
+
+**Add to Claude Desktop:**
+
+Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+
+```json
+{
+  "mcpServers": {
+    "ai-engineering": {
+      "command": "node",
+      "args": ["/path/to/outputs/mcp-servers/server-name/index.js"]
+    }
+  }
+}
+```
+
+**Add to Continue (VS Code extension):**
+
+In your `~/.continue/config.json`:
+
+```json
+{
+  "mcpServers": [
+    {
+      "name": "ai-engineering",
+      "command": "node /path/to/outputs/mcp-servers/server-name/index.js"
+    }
+  ]
+}
+```
+
+After restarting your client, the server's tools appear in the tool list and can be invoked by name.
+
+## SkillKit integration
+
+The course is designed to work with SkillKit — a system for installing, versioning, and sharing AI skills. When the `outputs/index.json` is fully populated, you'll be able to install any artifact directly:
+
+```bash
+# Install a single skill
+skillkit install ai-engineering-from-scratch/loss-debugger
+
+# Install all skills for a phase
+skillkit install ai-engineering-from-scratch --phase 03
+```
+
+<Note>
+SkillKit integration is being developed alongside the course. Track progress in the [GitHub repository](https://github.com/rohitg00/ai-engineering-from-scratch) and see [Contributing](/reference/contributing) if you want to help build it out.
+</Note>
+
+## Contributing outputs
+
+Every lesson in the roadmap should ship at least one artifact. If you complete a lesson that doesn't have outputs yet:
+
+1. Create the artifact in the lesson's `outputs/` folder following the prompt or skill format above.
+2. Add an entry to the top-level `outputs/index.json`.
+3. Submit a PR — see [Contributing](/reference/contributing) for the full process.
+
+The most needed outputs are for the 164+ unfinished lessons in Phases 4–19. Pick any ⬚ lesson in the [roadmap](/reference/roadmap) and ship the output.

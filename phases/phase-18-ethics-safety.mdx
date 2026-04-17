@@ -1,0 +1,116 @@
+---
+title: 'Phase 18: Ethics, Safety & Alignment — Not Optional'
+description: 'Build AI responsibly: bias and fairness, alignment techniques, red teaming, responsible AI frameworks, differential privacy, and interpretability.'
+keywords: ['AI ethics', 'AI alignment', 'red teaming', 'bias fairness', 'differential privacy', 'federated learning', 'SHAP', 'interpretability', 'responsible AI']
+---
+
+Phase 18 is the shortest phase in the course and the one you cannot skip. It covers the non-technical constraints that determine whether AI systems cause harm at scale: bias and fairness, alignment with human values, adversarial robustness, privacy preservation, and interpretability. These are not optional additions — they are engineering requirements.
+
+<Note>
+  **Status: Planned (⬚)** — 6 lessons, ~5 hours. All lessons are queued for development. Check the [ROADMAP](https://github.com/rohitg00/ai-engineering-from-scratch/blob/main/ROADMAP.md) for the latest status.
+</Note>
+
+## Lesson table
+
+| # | Lesson | Status | Est. | Lang |
+|:---:|--------|:------:|------|------|
+| 01 | AI Ethics: Bias, Fairness | ⬚ | ~45 min | — |
+| 02 | Alignment: What & Why | ⬚ | ~45 min | — |
+| 03 | Red Teaming & Adversarial Testing | ⬚ | ~75 min | Python |
+| 04 | Responsible AI Frameworks | ⬚ | ~45 min | — |
+| 05 | Privacy: Differential Privacy, FL | ⬚ | ~45 min | Python |
+| 06 | Interpretability: SHAP, Attention | ⬚ | ~45 min | Python |
+
+## Key concepts
+
+### AI ethics: bias and fairness (lesson 01)
+
+Bias in AI systems is not a statistical anomaly — it is an engineering failure. Lesson 01 covers:
+
+- **Sources of bias**: training data representation, labeling bias, feedback loops, proxy variables
+- **Types of unfairness**: individual fairness (similar people treated similarly), group fairness (equal outcomes across protected groups), counterfactual fairness
+- **Measurement**: disparate impact ratio, equalized odds, calibration across groups
+- **Mitigation**: pre-processing (resampling, reweighting), in-processing (fairness constraints during training), post-processing (threshold adjustment)
+
+The lesson uses concrete examples from hiring, lending, and content moderation — domains where biased AI systems have caused documented harm.
+
+### Alignment (lesson 02)
+
+Alignment is the problem of ensuring AI systems pursue goals that match human intentions. This matters at two levels:
+
+**Specification alignment** — did you specify the right objective? An AI optimizing for engagement may learn to promote outrage. An AI optimizing for user ratings may learn to tell people what they want to hear.
+
+**Robustness alignment** — does the system pursue that objective even in novel situations, under adversarial pressure, or when given a loophole?
+
+Lesson 02 covers:
+- RLHF (covered in depth in Phase 10) and its limitations
+- Constitutional AI and self-critique
+- Scalable oversight: how do you supervise a system smarter than the supervisor?
+- Debate and amplification as alignment techniques
+
+### Red teaming & adversarial testing (lesson 03)
+
+Red teaming is the practice of attacking your own AI system to find failure modes before deployment. Lesson 03 covers:
+
+- **Prompt injection** — injecting instructions via user input that override the system prompt
+- **Jailbreaking** — eliciting harmful outputs through framing, roleplay, or multi-step manipulation
+- **Data poisoning** — compromising training data to influence model behavior
+- **Model extraction** — inferring model parameters or training data through repeated queries
+- **Adversarial examples** — small perturbations to inputs that cause dramatic output changes
+
+The lesson builds a red-teaming harness in Python: a systematic way to generate, log, and analyze adversarial prompts against your AI application.
+
+### Responsible AI frameworks (lesson 04)
+
+Lesson 04 surveys the major responsible AI frameworks in industry and regulation:
+
+| Framework | Origin | Focus |
+|-----------|--------|-------|
+| EU AI Act | European Union | Risk-based regulation, prohibited uses, transparency requirements |
+| NIST AI RMF | US Government | Risk management lifecycle: Map, Measure, Manage, Govern |
+| Google PAIR | Google | People + AI Research, human-centered design |
+| Microsoft RAI | Microsoft | Fairness, reliability, privacy, inclusiveness, transparency, accountability |
+| Anthropic's RSP | Anthropic | Responsible Scaling Policy — capability thresholds that trigger safety reviews |
+
+The lesson is practical: how to apply these frameworks to actual system design decisions, not just compliance checkboxes.
+
+### Privacy: differential privacy and federated learning (lesson 05)
+
+AI systems often train on sensitive data. Two techniques allow learning from data without exposing individual records:
+
+**Differential privacy (DP)** adds carefully calibrated noise to training or inference, providing a mathematical guarantee: the probability of inferring any individual's data from the model is bounded by a privacy parameter ε. Lesson 05 covers DP-SGD (training with DP) and the privacy-utility tradeoff.
+
+**Federated learning (FL)** trains models across distributed devices without centralizing raw data. Each device trains on its local data and sends only gradient updates to a central server. The server aggregates updates without ever seeing individual data. Lesson 05 covers FedAvg, secure aggregation, and the communication overhead tradeoff.
+
+### Interpretability: SHAP and attention (lesson 06)
+
+A model that cannot explain its decisions is difficult to debug, audit, or trust. Lesson 06 covers two complementary approaches:
+
+**SHAP (SHapley Additive exPlanations)** computes the contribution of each input feature to a specific prediction, based on game-theoretic Shapley values. Works for any model type. Key outputs: feature importance plots, dependence plots, interaction values.
+
+**Attention visualization** examines the attention weights in transformer models to understand which tokens the model attended to when producing an output. Useful for language models, but note: high attention weight does not always mean causal importance.
+
+The lesson builds an interpretability pipeline for a text classifier: SHAP explanations for individual predictions, aggregate feature importance, and attention maps.
+
+## Why this is not optional
+
+<CardGroup cols={2}>
+  <Card title="Regulation is arriving" icon="building">
+    The EU AI Act requires risk assessments, transparency documentation, and human oversight for high-risk AI systems. Understanding these requirements now saves engineering rework later.
+  </Card>
+  <Card title="Failures are public" icon="alert-triangle">
+    Biased hiring tools, toxic content recommenders, and hallucinating medical AI have caused real harm and made front-page news. Ethics failures are product failures.
+  </Card>
+  <Card title="Systems scale" icon="trending-up">
+    An AI system deployed to millions of users amplifies any bias or failure mode by orders of magnitude. The engineering discipline to prevent this must be built in from the start.
+  </Card>
+  <Card title="Alignment is hard" icon="target">
+    As AI systems become more capable, ensuring they pursue the right goals becomes harder. The alignment problem is unsolved. Understanding its dimensions helps you build safer systems today.
+  </Card>
+</CardGroup>
+
+## Prerequisites
+
+- Phase 10 (LLMs from Scratch) — RLHF, Constitutional AI
+- Phase 11 (LLM Engineering) — guardrails, safety layers
+- Phase 14 (Agent Engineering) — sandboxing, permissions

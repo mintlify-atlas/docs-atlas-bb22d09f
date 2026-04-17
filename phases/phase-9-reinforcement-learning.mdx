@@ -1,0 +1,141 @@
+---
+title: 'Phase 9: Reinforcement Learning (~13 hrs)'
+description: '12 lessons, ~13 hours. Build RL algorithms from MDPs and Q-learning through DQN, PPO, Actor-Critic, and RLHF — the technique used to align ChatGPT and Claude.'
+keywords: ['reinforcement learning', 'RL', 'Q-learning', 'DQN', 'PPO', 'Actor-Critic', 'RLHF', 'policy gradient', 'MDP', 'multi-agent RL', 'reward modeling']
+---
+
+Reinforcement learning is the framework in which an agent learns by interacting with an environment — taking actions, receiving rewards, and updating its policy to maximize long-term return. RL is the foundation of RLHF (Reinforcement Learning from Human Feedback), the technique used to align language models like ChatGPT and Claude. This phase builds every algorithm from the Bellman equation up through PPO and reward modeling, all in Python, against OpenAI Gym and custom environments.
+
+<Note>
+  **Status: ⬚ Planned** — This phase is fully scoped. See the [roadmap](https://github.com/rohitg00/ai-engineering-from-scratch/blob/main/ROADMAP.md) for the latest progress.
+</Note>
+
+## Phase stats
+
+| Detail | Value |
+|--------|-------|
+| Lessons | 12 |
+| Estimated time | ~13 hours |
+| Status | ⬚ Planned |
+| Languages | Python |
+| Prerequisites | Phase 3 — Deep Learning Core, Phase 1 lessons 6–8 (probability, optimization) |
+
+## Lessons
+
+| # | Lesson | Type | Lang | Status |
+|:---:|--------|:----:|------|:------:|
+| 01 | MDPs, States, Actions & Rewards | Learn | 🐍 | ⬚ |
+| 02 | Dynamic Programming | Build | 🐍 | ⬚ |
+| 03 | Monte Carlo Methods | Build | 🐍 | ⬚ |
+| 04 | Temporal Difference — Q-Learning, SARSA | Build | 🐍 | ⬚ |
+| 05 | Deep Q-Networks (DQN) | Build | 🐍 | ⬚ |
+| 06 | Policy Gradient Methods — REINFORCE | Build | 🐍 | ⬚ |
+| 07 | Actor-Critic — A2C, A3C | Build | 🐍 | ⬚ |
+| 08 | Proximal Policy Optimization (PPO) | Build | 🐍 | ⬚ |
+| 09 | Reward Modeling & RLHF | Build | 🐍 | ⬚ |
+| 10 | Multi-Agent RL | Build | 🐍 | ⬚ |
+| 11 | Sim-to-Real Transfer | Build | 🐍 | ⬚ |
+| 12 | RL for Games | Build | 🐍 | ⬚ |
+
+## Key techniques and architectures
+
+<CardGroup cols={2}>
+  <Card title="Value-based methods" icon="table-cells">
+    Bellman equations and dynamic programming for tabular MDPs; Monte Carlo returns; temporal difference (TD) learning; Q-learning and SARSA; DQN with experience replay and a target network.
+  </Card>
+  <Card title="Policy gradient methods" icon="chart-line">
+    REINFORCE with Monte Carlo returns; the policy gradient theorem; baseline subtraction for variance reduction; Actor-Critic (A2C) combining value estimation with policy optimization.
+  </Card>
+  <Card title="Modern deep RL" icon="brain">
+    Proximal Policy Optimization (PPO) with clipped surrogate objective — the workhorse algorithm for RLHF; A3C with asynchronous parallel workers; advantage estimation with GAE.
+  </Card>
+  <Card title="RL for AI alignment" icon="shield-check">
+    Reward model training from human preference pairs; the full RLHF pipeline (SFT → reward model → PPO fine-tuning); multi-agent coordination; domain randomization for sim-to-real transfer.
+  </Card>
+</CardGroup>
+
+## What you'll build
+
+By the end of this phase you will have shipped:
+
+- A tabular MDP solver using policy iteration and value iteration
+- A Monte Carlo policy evaluation and control loop on a gridworld environment
+- Q-learning and SARSA agents trained on OpenAI Gym's FrozenLake and Taxi environments
+- A DQN agent with experience replay and target network that plays CartPole and LunarLander
+- A REINFORCE policy gradient agent with learned baseline
+- An A2C agent using advantage estimation with a shared actor-critic network
+- A PPO agent with clipped surrogate loss trained on a continuous control task (Pendulum or BipedalWalker)
+- A reward model trained on human preference pairs, and a PPO fine-tuning loop that uses it (the RLHF pipeline)
+- A multi-agent competitive environment where two agents learn opposing strategies
+- An RL agent for a game (Atari or custom), with a training curve and replay visualization
+
+## Prerequisites
+
+<Tabs>
+  <Tab title="Required">
+    **Phase 3 — Deep Learning Core** (all 13 lessons): DQN, A2C, and PPO all use neural networks as function approximators. **Phase 1 lessons 6–8** (probability, Bayes, optimization): RL is fundamentally about expected returns, Bellman equations, and gradient-based policy updates.
+  </Tab>
+  <Tab title="Recommended">
+    **Phase 2 — ML Fundamentals** (lesson 1 — types of learning): understanding where RL sits among supervised, unsupervised, and self-supervised learning clarifies why separate RL techniques are needed.
+  </Tab>
+</Tabs>
+
+## Core concept: Q-learning and the Bellman equation
+
+Q-learning is the simplest and most instructive RL algorithm. It maintains a table of Q-values `Q(s, a)` — the expected cumulative reward for taking action `a` in state `s` and then following the optimal policy. The Bellman equation provides the update rule.
+
+```python
+import numpy as np
+
+class QLearningAgent:
+    """Tabular Q-learning with epsilon-greedy exploration."""
+
+    def __init__(self, n_states, n_actions, lr=0.1, gamma=0.99,
+                 epsilon_start=1.0, epsilon_end=0.01, epsilon_decay=0.995):
+        self.Q = np.zeros((n_states, n_actions))
+        self.lr = lr
+        self.gamma = gamma            # discount factor
+        self.epsilon = epsilon_start
+        self.epsilon_end = epsilon_end
+        self.epsilon_decay = epsilon_decay
+        self.n_actions = n_actions
+
+    def select_action(self, state):
+        """Epsilon-greedy: explore randomly or exploit best known action."""
+        if np.random.rand() < self.epsilon:
+            return np.random.randint(self.n_actions)
+        return np.argmax(self.Q[state])
+
+    def update(self, state, action, reward, next_state, done):
+        """Bellman update: Q(s,a) ← Q(s,a) + α [r + γ max_a' Q(s',a') - Q(s,a)]"""
+        td_target = reward + (0 if done else self.gamma * np.max(self.Q[next_state]))
+        td_error  = td_target - self.Q[state, action]
+        self.Q[state, action] += self.lr * td_error
+        self.epsilon = max(self.epsilon_end, self.epsilon * self.epsilon_decay)
+        return abs(td_error)
+
+# Training loop
+# agent = QLearningAgent(n_states=env.observation_space.n,
+#                        n_actions=env.action_space.n)
+# for episode in range(1000):
+#     state = env.reset()
+#     done = False
+#     while not done:
+#         action = agent.select_action(state)
+#         next_state, reward, done, _ = env.step(action)
+#         agent.update(state, action, reward, next_state, done)
+#         state = next_state
+```
+
+### From Q-learning to RLHF
+
+The RLHF pipeline used to align language models follows the same RL loop, with three key changes:
+
+| RL concept | RLHF equivalent |
+|------------|----------------|
+| Environment state | Current conversation context + partial response |
+| Action | Next token sampled from the language model |
+| Reward signal | Score from a reward model trained on human preference pairs |
+| Policy update | PPO with KL penalty to prevent the model drifting too far from the supervised baseline |
+
+Lesson 09 (Reward Modeling & RLHF) builds this pipeline end-to-end, connecting Phase 9 directly to Phase 10 (LLMs from Scratch).

@@ -1,0 +1,205 @@
+---
+title: "Contributing to AI Engineering from Scratch"
+description: "How to add lessons, translations, outputs, and bug fixes to the course — with the lesson template format, PR process, and code guidelines."
+keywords: ["contributing", "open source AI course", "add lesson", "pull request", "AI engineering community"]
+---
+
+AI Engineering from Scratch is community-driven. The 96 complete lessons were built by contributors who understand that good AI education should be free, practical, and honest. If you've found a bug, want to write a new lesson, or want to add a reusable prompt or skill to the toolkit — this page covers how.
+
+## Ways to contribute
+
+<CardGroup cols={2}>
+  <Card title="Add a new lesson" icon="book-open">
+    Write a full lesson for any ⬚ item in the [roadmap](/reference/roadmap). Follow the standard structure so it integrates cleanly.
+  </Card>
+  <Card title="Add a translation" icon="language">
+    Translate any existing English lesson into another language. All content lives in the `docs/` folder of each lesson.
+  </Card>
+  <Card title="Add outputs" icon="file-export">
+    Every lesson should ship a prompt, skill, agent, or MCP server. Add one to any lesson that's missing it.
+  </Card>
+  <Card title="Fix bugs or improve lessons" icon="wrench">
+    Fix code that doesn't run, improve explanations, add better diagrams, or update outdated information.
+  </Card>
+</CardGroup>
+
+## Adding a new lesson
+
+### Lesson directory structure
+
+Each lesson lives in `phases/XX-phase-name/NN-lesson-name/` with this exact structure:
+
+```text
+NN-lesson-name/
+├── code/           At least one runnable implementation (required)
+├── notebook/       Jupyter notebook for experimentation (optional)
+├── docs/
+│   └── en.md       Lesson documentation (required)
+└── outputs/        Prompts, skills, or agents this lesson produces (if applicable)
+```
+
+### Lesson document format
+
+The lesson doc (`docs/en.md`) follows a six-section structure. Every section is required:
+
+```markdown
+# Lesson Title
+
+> One-line motto — the core idea in one sentence.
+
+## The Problem
+
+Why does this matter? What can't you do without this?
+
+## The Concept
+
+Explain with diagrams, visuals, and intuition. Code comes later.
+
+## Build It
+
+Step-by-step implementation from scratch.
+
+## Use It
+
+Now use a real framework or library to do the same thing.
+
+## Ship It
+
+The prompt, skill, agent, or tool this lesson produces.
+
+## Exercises
+
+1. Exercise one
+2. Exercise two
+3. Challenge exercise
+```
+
+<Note>
+"Build It" always comes before "Use It." Every lesson implements the concept from first principles before showing the library version. This is the defining constraint of the course — don't skip it.
+</Note>
+
+## Adding a translation
+
+Create a new file in any lesson's `docs/` folder using the ISO language code:
+
+```text
+docs/
+├── en.md    English — always required, always the source of truth
+├── zh.md    Chinese
+├── ja.md    Japanese
+├── es.md    Spanish
+├── hi.md    Hindi
+└── ...      Any other language
+```
+
+Keep the same six-section structure as the English version. Translate all prose content. Do not translate code — code is language-agnostic and should remain identical to the English version.
+
+## Adding outputs
+
+If a lesson should produce a reusable artifact, add it to the lesson's `outputs/` folder and register it in the top-level `outputs/index.json`.
+
+### Prompt format
+
+```markdown
+---
+name: prompt-name
+description: What this prompt does
+phase: 14
+lesson: 01
+---
+
+[System prompt or template here]
+```
+
+### Skill format
+
+```markdown
+---
+name: skill-name
+description: What this skill teaches the AI agent
+version: 1.0.0
+phase: 14
+lesson: 01
+tags: [agents, loops]
+---
+
+[Skill content here]
+```
+
+After adding the file, add an entry to `outputs/index.json`:
+
+```json
+{
+  "version": "1.0.0",
+  "prompts": [
+    {
+      "name": "prompt-name",
+      "phase": 14,
+      "lesson": 1,
+      "path": "phases/14-agent-engineering/01-the-agent-loop/outputs/prompt-name.md"
+    }
+  ],
+  "skills": [],
+  "agents": [],
+  "mcp_servers": []
+}
+```
+
+## Fixing bugs or improving lessons
+
+- Fix code that doesn't run
+- Improve explanations
+- Add better diagrams or visuals
+- Update outdated information (model names, library APIs, benchmarks)
+- Add more exercises, especially ones that connect multiple phases
+
+There's no formal process for bug fixes — just make the change, explain what was wrong and what you fixed in the PR description, and submit.
+
+## Code guidelines
+
+- **Code must run.** Every code file should execute without errors with the listed dependencies. If it needs a GPU or specific environment, document it.
+- **No comments in code.** Code should be self-explanatory. Use the lesson docs for all explanation.
+- **Best language for the job.** Don't force Python where TypeScript or Rust is the better choice.
+- **Build from scratch first.** Always implement the concept from first principles before showing the framework version.
+- **Keep it practical.** Theory serves practice, not the other way around.
+- **No AI slop.** Write like a human. Be direct. Cut filler. If a sentence doesn't add information, delete it.
+
+## PR process
+
+<Steps>
+  <Step title="Fork the repository">
+    Fork [rohitg00/ai-engineering-from-scratch](https://github.com/rohitg00/ai-engineering-from-scratch) on GitHub. Clone your fork locally.
+  </Step>
+  <Step title="Create a feature branch">
+    Use a descriptive branch name that identifies the phase, lesson, and type of change:
+    ```bash
+    git checkout -b add-lesson-phase4-convolutions
+    git checkout -b fix-phase3-loss-function-code
+    git checkout -b translate-phase1-zh
+    ```
+  </Step>
+  <Step title="Make your changes">
+    Follow the lesson structure, code guidelines, and output formats documented above. For new lessons, work through all six sections. For translations, ensure all prose is translated.
+  </Step>
+  <Step title="Ensure all code runs">
+    Run every code file end-to-end before submitting. If you need a specific environment, add a `requirements.txt` or `package.json` and note the dependencies in the lesson doc.
+  </Step>
+  <Step title="Submit a pull request">
+    Open a PR against the `main` branch. In the PR description:
+    - State what phase and lesson this covers
+    - Briefly describe what the lesson teaches or what you fixed
+    - Link to any relevant issues
+
+    Keep PRs focused — one lesson or one fix per PR. Large PRs that touch multiple lessons take longer to review.
+  </Step>
+</Steps>
+
+## Code of conduct
+
+See [CODE_OF_CONDUCT.md](https://github.com/rohitg00/ai-engineering-from-scratch/blob/main/CODE_OF_CONDUCT.md). The short version: be kind, be helpful, be constructive. Criticism of ideas is welcome. Criticism of people is not.
+
+## Where to start
+
+The fastest way to contribute is to pick any ⬚ lesson from the [roadmap](/reference/roadmap) and write it. The most needed phases right now are 4–9 (Computer Vision, NLP, Speech, Transformers, Generative AI, RL) — all are fully unstarted and the lesson titles are already defined.
+
+If you're not ready to write a full lesson, adding outputs (prompts and skills) to any completed lesson that's missing them is a great first contribution. Check the `phases/` directory for lessons with an empty `outputs/` folder.

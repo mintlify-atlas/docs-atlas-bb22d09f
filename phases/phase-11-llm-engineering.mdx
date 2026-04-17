@@ -1,0 +1,401 @@
+---
+title: "Phase 11: LLM Engineering — Production Stack (15 hrs)"
+description: "Ship LLMs in production — prompt engineering, RAG pipelines, LoRA fine-tuning, function calling, caching, guardrails, and a full production app."
+keywords: ["prompt engineering", "RAG", "LoRA", "QLoRA", "function calling", "embeddings", "guardrails", "LLM production", "context engineering"]
+---
+
+Phase 11 is where LLM theory becomes engineering practice. All 13 lessons are complete, covering every layer of the production LLM stack: how you write prompts, how you retrieve context, how you adapt models without full retraining, how you call tools, and how you keep systems reliable and cost-efficient at scale.
+
+<Note>
+  **Phase status: ✅ Complete (~15 hours)**
+
+  All 13 lessons are complete. Languages: Python throughout; TypeScript for structured outputs (03), context engineering (05), and RAG (06).
+</Note>
+
+## Lessons
+
+| # | Lesson | Status | Est. |
+|:---:|--------|:------:|-----:|
+| 01 | Prompt Engineering: Techniques & Patterns | ✅ | ~45 min |
+| 02 | Few-Shot, Chain-of-Thought, Tree-of-Thought | ✅ | ~45 min |
+| 03 | Structured Outputs | ✅ | ~75 min |
+| 04 | Embeddings & Vector Representations | ✅ | ~75 min |
+| 05 | Context Engineering | ✅ | ~75 min |
+| 06 | RAG: Retrieval-Augmented Generation | ✅ | ~75 min |
+| 07 | Advanced RAG: Chunking, Reranking | ✅ | ~75 min |
+| 08 | Fine-Tuning with LoRA & QLoRA | ✅ | ~75 min |
+| 09 | Function Calling & Tool Use | ✅ | ~75 min |
+| 10 | Evaluation & Testing | ✅ | ~45 min |
+| 11 | Caching, Rate Limiting & Cost Optimization | ✅ | ~45 min |
+| 12 | Guardrails & Safety | ✅ | ~45 min |
+| 13 | Building a Production LLM App | ✅ | ~120 min |
+
+---
+
+## Prompt engineering
+
+Most people write prompts like they are texting a friend. Prompt engineering is not about tricks — it is about understanding that every token you send is an instruction, and the model follows instructions literally.
+
+The same task, two ways:
+
+<Tabs>
+  <Tab title="Vague prompt">
+    ```text
+    Write a marketing email for our new product.
+    ```
+
+    Activates a generic distribution of marketing emails from the model's training data. The output could be 50 words or 500, formal or casual, B2B or B2C.
+  </Tab>
+  <Tab title="Engineered prompt">
+    ```text
+    You are a senior copywriter at a B2B SaaS company. Write a product launch email
+    for DevFlow, a CI/CD pipeline debugger. Target audience: engineering managers at
+    Series B startups. Tone: confident, technical, not salesy. Length: 150 words.
+    Include one specific metric (3.2x faster pipeline debugging). End with a single
+    CTA linking to a demo page. Output the email only, no subject line suggestions.
+    ```
+
+    Activates a narrow, high-quality slice of the model's training distribution. Same model, same parameters — wildly different output.
+  </Tab>
+</Tabs>
+
+### The 10 patterns
+
+The lesson implements a full pattern library in Python, each pattern encoded as a structured template with recommended temperature settings:
+
+```python
+PROMPT_PATTERNS = {
+    "chain_of_thought": {
+        "template": (
+            "Think through this step by step.\n\n"
+            "Problem: {problem}\n\n"
+            "Steps:\n"
+            "1. Identify the key components\n"
+            "2. Analyze each component\n"
+            "3. Synthesize your findings\n"
+            "4. State your conclusion\n\n"
+            "Show your reasoning before giving the final answer."
+        ),
+        "temperature": 0.3,
+        "description": "Forces explicit reasoning steps before the final answer",
+    },
+    "few_shot": {
+        "template": (
+            "Here are examples of the expected input/output format:\n\n"
+            "{examples}\n\n"
+            "Now process this input:\n{input}"
+        ),
+        "temperature": 0.0,
+        "description": "Provides concrete examples to anchor output format and style",
+    },
+    "guardrail": {
+        "template": (
+            "You are a {role}.\n\n"
+            "Rules:\n"
+            "- ONLY answer questions about {domain}\n"
+            "- If the question is outside {domain}, say: 'This is outside my scope.'\n"
+            "- NEVER make up information. If unsure, say 'I don't know.'\n"
+            "- {additional_rules}\n\n"
+            "User question: {question}"
+        ),
+        "temperature": 0.3,
+        "description": "Constrains the model to a specific domain with explicit boundaries",
+    },
+    # ... 7 more patterns: persona, template_fill, critique, meta_prompt,
+    #     decomposition, audience_adapt, boundary
+}
+```
+
+### Temperature reference
+
+| Setting | Temperature | Use case |
+|---------|------------|----------|
+| Deterministic | 0.0 | Data extraction, classification, code generation |
+| Conservative | 0.3 | Summarization, analysis, technical writing |
+| Balanced | 0.7 | General Q&A, explanations |
+| Creative | 1.0 | Brainstorming, creative writing |
+
+### Cross-model API differences
+
+<Tabs>
+  <Tab title="OpenAI">
+    ```python
+    # response = client.chat.completions.create(
+    #     model="gpt-4o",
+    #     temperature=0.0,
+    #     messages=[
+    #         {"role": "system", "content": "You are a senior Python developer. Respond with code only."},
+    #         {"role": "user", "content": "Write a function that finds the longest palindromic substring."},
+    #     ],
+    # )
+    ```
+  </Tab>
+  <Tab title="Anthropic">
+    ```python
+    # response = client.messages.create(
+    #     model="claude-sonnet-4-20250514",
+    #     max_tokens=1024,
+    #     temperature=0.0,
+    #     system="You are a data extraction engine. Output valid JSON only.",
+    #     messages=[
+    #         {"role": "user", "content": "Extract: John Smith, age 34, works at Google..."},
+    #         {"role": "assistant", "content": "{"},  # assistant prefill — Anthropic-unique
+    #     ],
+    # )
+    # result = "{" + response.content[0].text
+    ```
+
+    The assistant prefill forces Claude to continue producing JSON without any preamble — more reliable than prompt-based JSON requests. Only Anthropic supports this natively.
+  </Tab>
+  <Tab title="Google">
+    ```python
+    # model = genai.GenerativeModel(
+    #     "gemini-1.5-pro",
+    #     system_instruction="You are a technical analyst. Be precise and cite sources.",
+    #     generation_config=genai.GenerationConfig(temperature=0.3, max_output_tokens=2048),
+    # )
+    # response = model.generate_content("Compare PostgreSQL and MySQL for write-heavy workloads.")
+    ```
+
+    Gemini processes system instructions as part of the model configuration, not as a message. The 2M token context window supports massive few-shot example sets.
+  </Tab>
+</Tabs>
+
+---
+
+## Few-shot, CoT, and ToT
+
+Lesson 02 covers three reasoning techniques that work on top of any model without fine-tuning:
+
+<CardGroup cols={3}>
+  <Card title="Few-shot" icon="list-ol">
+    Include 2–10 input/output examples in the prompt. The model infers the task pattern from the examples rather than from instructions alone. Transfers well across models; more reliable than instructions for format-sensitive tasks.
+  </Card>
+  <Card title="Chain-of-Thought" icon="arrow-right-arrow-left">
+    Prompt the model to show intermediate reasoning before the final answer. Improves accuracy on math, logic, and multi-step tasks by 10–40% (Wei et al., 2022). Works best with `temperature ≤ 0.5`.
+  </Card>
+  <Card title="Tree-of-Thought" icon="git-branch">
+    Extends CoT by exploring multiple reasoning paths simultaneously and selecting the best branch. Effective for problems where the first reasoning path often fails — planning, combinatorial problems, code debugging.
+  </Card>
+</CardGroup>
+
+---
+
+## RAG: Retrieval-Augmented Generation
+
+RAG solves the knowledge cutoff problem without fine-tuning. Instead of baking facts into weights, you retrieve relevant documents at query time and inject them into the context window.
+
+The pipeline has five stages:
+
+```
+Query → Embed → Search → Augment → Generate
+```
+
+Lesson 06 builds a complete RAG pipeline from scratch — no vector database, no LangChain, just Python:
+
+```python
+class RAGPipeline:
+    def __init__(self, chunk_size=200, overlap=50, top_k=5):
+        self.chunk_size = chunk_size
+        self.overlap = overlap
+        self.top_k = top_k
+        self.chunks = []
+        self.embeddings = []
+        self.vocab = []
+        self.idf = []
+        self.sources = []
+
+    def index(self, documents, source_names=None):
+        all_chunks = []
+        all_sources = []
+        for i, doc in enumerate(documents):
+            doc_chunks = chunk_text(doc, self.chunk_size, self.overlap)
+            all_chunks.extend(doc_chunks)
+            name = source_names[i] if source_names else f"doc_{i}"
+            all_sources.extend([name] * len(doc_chunks))
+
+        self.chunks = all_chunks
+        self.sources = all_sources
+        self.vocab = build_vocabulary(all_chunks)
+        self.idf = compute_idf(all_chunks, self.vocab)
+        self.embeddings = [
+            tfidf_embed(chunk, self.vocab, self.idf)
+            for chunk in all_chunks
+        ]
+        return len(all_chunks)
+
+    def query(self, question, top_k=None):
+        k = top_k or self.top_k
+        query_emb = tfidf_embed(question, self.vocab, self.idf)
+        results = search(query_emb, self.embeddings, k)
+
+        retrieved = []
+        for idx, score in results:
+            retrieved.append({
+                "chunk": self.chunks[idx],
+                "source": self.sources[idx],
+                "score": score,
+                "index": idx
+            })
+
+        chunk_texts = [r["chunk"] for r in retrieved]
+        prompt = build_rag_prompt(question, chunk_texts)
+        answer = simple_generate(prompt, chunk_texts)
+
+        return {"question": question, "answer": answer,
+                "prompt": prompt, "retrieved": retrieved}
+```
+
+The prompt template wraps retrieved chunks with a strict constraint:
+
+```python
+def build_rag_prompt(query, retrieved_chunks):
+    context = "\n\n---\n\n".join(
+        f"[Source {i+1}]\n{chunk}"
+        for i, chunk in enumerate(retrieved_chunks)
+    )
+    return (
+        "Answer the question based ONLY on the following context.\n"
+        "If the context doesn't contain enough information, "
+        "say \"I don't have enough information to answer that.\"\n\n"
+        f"Context:\n{context}\n\n"
+        f"Question: {query}\n\n"
+        "Answer:"
+    )
+```
+
+<Note>
+  The scratch implementation uses TF-IDF embeddings and cosine similarity. In production, replace `tfidf_embed` with a call to `text-embedding-3-small` (OpenAI) or `embed-english-v3.0` (Cohere) and use a vector database (pgvector, Chroma, Pinecone, Weaviate) for the similarity search. The pipeline structure stays identical.
+</Note>
+
+### Advanced RAG (Lesson 07)
+
+Lesson 07 extends the basic pipeline with:
+
+<CardGroup cols={2}>
+  <Card title="Chunking strategies" icon="scissors">
+    Fixed-size with overlap (as above), sentence-aware splitting, semantic chunking (split on topic shifts detected by embedding distance), and recursive character splitting. Chunk size is a hyperparameter — smaller chunks improve precision, larger chunks preserve context.
+  </Card>
+  <Card title="Reranking" icon="arrow-up-narrow-wide">
+    After an initial retrieval pass (fast, approximate), apply a cross-encoder reranker that scores each (query, chunk) pair jointly. More expensive but significantly more accurate. Cohere Rerank and BGE-reranker are common choices.
+  </Card>
+  <Card title="Hybrid search" icon="intersect">
+    Combine dense (embedding-based) and sparse (BM25/TF-IDF) retrieval, then merge results using Reciprocal Rank Fusion. Dense search handles semantic similarity; sparse search handles exact keyword matches.
+  </Card>
+  <Card title="Query transformation" icon="rotate">
+    Rewrite the user's query before retrieval — hypothetical document embeddings (HyDE), query expansion, sub-question decomposition. Addresses the vocabulary mismatch between how users phrase questions and how documents are written.
+  </Card>
+</CardGroup>
+
+---
+
+## Fine-tuning with LoRA and QLoRA
+
+Full fine-tuning of a 7B model requires 7× the model's weight memory for optimizer states. LoRA (Low-Rank Adaptation) makes fine-tuning practical on a single GPU.
+
+**The core idea:** instead of updating all weight matrices W, add a low-rank decomposition ΔW = BA where B ∈ ℝ^(d×r) and A ∈ ℝ^(r×k), with rank r ≪ min(d, k). Only A and B are trained. The original weights remain frozen.
+
+For a weight matrix of shape (4096, 4096) with rank r=16:
+- Full fine-tuning: 16.7M trainable parameters
+- LoRA: 2 × 4096 × 16 = 131K trainable parameters — **127× fewer**
+
+**QLoRA** combines 4-bit quantization of the frozen base model with LoRA adapters in full precision. A 65B parameter model that requires 780 GB in FP32 fine-tunes on a single 48 GB A100 with QLoRA.
+
+```python
+# from peft import get_peft_model, LoraConfig, TaskType
+# from transformers import AutoModelForCausalLM, BitsAndBytesConfig
+#
+# bnb_config = BitsAndBytesConfig(
+#     load_in_4bit=True,
+#     bnb_4bit_quant_type="nf4",
+#     bnb_4bit_compute_dtype=torch.float16,
+# )
+#
+# model = AutoModelForCausalLM.from_pretrained(
+#     "meta-llama/Llama-3.1-8B",
+#     quantization_config=bnb_config,
+# )
+#
+# lora_config = LoraConfig(
+#     task_type=TaskType.CAUSAL_LM,
+#     r=16,
+#     lora_alpha=32,
+#     target_modules=["q_proj", "v_proj"],
+#     lora_dropout=0.05,
+# )
+#
+# model = get_peft_model(model, lora_config)
+# model.print_trainable_parameters()
+# # trainable params: 6,815,744 || all params: 8,037,191,680 || trainable%: 0.0848
+```
+
+After fine-tuning, the LoRA adapter (a few hundred MB) can be merged back into the base model weights or kept separate for hot-swapping between tasks.
+
+---
+
+## Function calling and tool use
+
+Function calling lets LLMs invoke external tools — databases, APIs, calculators, code interpreters — and reason over the results. The model does not execute code; it generates a structured call that your application executes.
+
+The pattern:
+
+1. Define available functions as JSON schema
+2. Include function definitions in the API request
+3. Model returns a `tool_use` block with function name and arguments
+4. Your application executes the function
+5. Return the result to the model for final response generation
+
+```python
+# tools = [
+#     {
+#         "type": "function",
+#         "function": {
+#             "name": "get_current_weather",
+#             "description": "Get the current weather for a city",
+#             "parameters": {
+#                 "type": "object",
+#                 "properties": {
+#                     "city": {"type": "string", "description": "The city name"},
+#                     "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]},
+#                 },
+#                 "required": ["city"],
+#             },
+#         },
+#     }
+# ]
+#
+# response = client.chat.completions.create(
+#     model="gpt-4o",
+#     messages=[{"role": "user", "content": "What's the weather in Tokyo?"}],
+#     tools=tools,
+#     tool_choice="auto",
+# )
+#
+# if response.choices[0].message.tool_calls:
+#     tool_call = response.choices[0].message.tool_calls[0]
+#     result = call_weather_api(json.loads(tool_call.function.arguments))
+#     # add result to messages and call again for final answer
+```
+
+Function calling is the foundation of agent systems — covered in depth in Phases 13 and 14.
+
+---
+
+## Production considerations
+
+<CardGroup cols={2}>
+  <Card title="Caching" icon="database">
+    Semantic caching stores embeddings of previous queries and retrieves cached responses for similar new queries — not exact matches. Reduces API costs by 30–70% for customer-facing applications where users ask similar questions.
+  </Card>
+  <Card title="Rate limiting" icon="gauge">
+    Implement token bucket rate limiting per user and per API key. Track both requests-per-minute and tokens-per-minute — token limits are often the binding constraint for LLM APIs.
+  </Card>
+  <Card title="Cost optimization" icon="circle-dollar-sign">
+    Route simple queries to smaller, cheaper models (gpt-4o-mini, claude-haiku) and complex queries to frontier models. Model routing can reduce costs by 5–10× with minimal quality loss.
+  </Card>
+  <Card title="Guardrails" icon="shield">
+    Input and output classifiers that detect prompt injection, PII, harmful content, and off-topic requests. Libraries: Guardrails AI, NeMo Guardrails (NVIDIA), custom regex + LLM-based classifiers.
+  </Card>
+</CardGroup>
+
+Lesson 13 assembles all components into a production LLM application: a RAG-backed customer support bot with semantic caching, rate limiting, input validation, structured outputs, and observability hooks. It is the capstone for the entire phase.

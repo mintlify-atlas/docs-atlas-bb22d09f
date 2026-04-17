@@ -1,0 +1,121 @@
+---
+title: 'Phase 4: Computer Vision (~19 hrs)'
+description: '16 lessons, ~19 hours. Build vision systems from convolutions and CNNs through YOLO, U-Net, Stable Diffusion, ViT, and Rust-powered edge deployment.'
+keywords: ['computer vision', 'CNN', 'ResNet', 'YOLO', 'U-Net', 'diffusion models', 'ViT', 'image classification', 'object detection']
+---
+
+Computer vision teaches machines to understand the world through images — from the mathematics of pixels and convolutions up to real-time object detection, generative image synthesis, and neural radiance fields. This phase builds every technique from scratch in Python before applying it with PyTorch, so you understand what the framework is doing before you use it.
+
+<Note>
+  **Status: ⬚ Planned** — This phase is fully scoped and ready to start. See the [roadmap](https://github.com/rohitg00/ai-engineering-from-scratch/blob/main/ROADMAP.md) for the latest progress.
+</Note>
+
+## Phase stats
+
+| Detail | Value |
+|--------|-------|
+| Lessons | 16 |
+| Estimated time | ~19 hours |
+| Status | ⬚ Planned |
+| Languages | Python, Rust (edge deployment) |
+| Prerequisites | Phase 3 — Deep Learning Core |
+
+## Lessons
+
+| # | Lesson | Type | Lang | Status |
+|:---:|--------|:----:|------|:------:|
+| 01 | Image Fundamentals: Pixels, Channels, Color Spaces | Learn | 🐍 | ⬚ |
+| 02 | Convolutions from Scratch | Build | 🐍 | ⬚ |
+| 03 | CNNs: LeNet to ResNet | Build | 🐍 | ⬚ |
+| 04 | Image Classification | Build | 🐍 | ⬚ |
+| 05 | Transfer Learning & Fine-Tuning | Build | 🐍 | ⬚ |
+| 06 | Object Detection — YOLO from Scratch | Build | 🐍 | ⬚ |
+| 07 | Semantic Segmentation — U-Net | Build | 🐍 | ⬚ |
+| 08 | Instance Segmentation — Mask R-CNN | Build | 🐍 | ⬚ |
+| 09 | Image Generation — GANs | Build | 🐍 | ⬚ |
+| 10 | Image Generation — Diffusion Models | Build | 🐍 | ⬚ |
+| 11 | Stable Diffusion — Architecture & Fine-Tuning | Build | 🐍 | ⬚ |
+| 12 | Video Understanding — Temporal Modeling | Build | 🐍 | ⬚ |
+| 13 | 3D Vision: Point Clouds, NeRFs | Build | 🐍 | ⬚ |
+| 14 | Vision Transformers (ViT) | Build | 🐍 | ⬚ |
+| 15 | Real-Time Vision: Edge Deployment | Build | 🐍 🦀 | ⬚ |
+| 16 | Build a Complete Vision Pipeline | Build | 🐍 | ⬚ |
+
+## Key techniques and architectures
+
+<CardGroup cols={2}>
+  <Card title="Classical CNNs" icon="layer-group">
+    Convolutions, pooling, BatchNorm — and the evolution from LeNet through VGG, Inception, and ResNet with skip connections.
+  </Card>
+  <Card title="Detection & Segmentation" icon="object-ungroup">
+    YOLO for real-time object detection; U-Net for pixel-level semantic segmentation; Mask R-CNN for instance-level masks.
+  </Card>
+  <Card title="Generative Vision" icon="image">
+    GANs for adversarial generation; DDPM diffusion models from scratch; latent diffusion and Stable Diffusion fine-tuning.
+  </Card>
+  <Card title="Modern Architectures" icon="microchip">
+    Vision Transformers (ViT) treating image patches as tokens; NeRFs for continuous 3D scene representation; edge-optimized models in Rust.
+  </Card>
+</CardGroup>
+
+## What you'll build
+
+By the end of this phase you will have shipped:
+
+- A custom CNN trained on an image classification benchmark, showing the LeNet → ResNet progression
+- An end-to-end YOLO object detector built from scratch, then fine-tuned on a custom dataset
+- A U-Net segmentation model that produces pixel-level masks
+- A working DDPM diffusion pipeline that generates novel images from Gaussian noise
+- A Stable Diffusion fine-tuning script using LoRA on a small domain dataset
+- A ViT model that tokenizes image patches and runs transformer-style attention over them
+- A real-time inference binary in Rust (lesson 15) for edge-constrained deployment
+- A complete vision pipeline (lesson 16) combining detection, segmentation, and classification end-to-end
+
+## Prerequisites
+
+<Tabs>
+  <Tab title="Required">
+    **Phase 3 — Deep Learning Core** (all 13 lessons): backpropagation from scratch, PyTorch basics, optimizers, regularization, and debugging. You need to understand how gradients flow before reasoning about convolutional layers.
+  </Tab>
+  <Tab title="Recommended">
+    **Phase 1 — Math Foundations**, lessons 1–3 (linear algebra, matrix operations) and lesson 20 (Fourier Transform) are useful context for understanding convolution as a mathematical operation and the frequency-domain perspective on image features.
+  </Tab>
+</Tabs>
+
+## Core concept: convolution as a sliding dot product
+
+Convolution is the mathematical heart of CNNs. A kernel slides across an input feature map, computing a dot product at each position. The result is a new feature map that highlights the pattern the kernel was trained to detect.
+
+```python
+import numpy as np
+
+def convolve2d(image, kernel, stride=1, padding=0):
+    """Manual 2D convolution — no frameworks."""
+    if padding > 0:
+        image = np.pad(image, padding, mode='constant')
+
+    kH, kW = kernel.shape
+    iH, iW = image.shape
+    oH = (iH - kH) // stride + 1
+    oW = (iW - kW) // stride + 1
+    output = np.zeros((oH, oW))
+
+    for i in range(0, oH):
+        for j in range(0, oW):
+            patch = image[i*stride:i*stride+kH, j*stride:j*stride+kW]
+            output[i, j] = np.sum(patch * kernel)
+
+    return output
+
+# Sobel edge-detection kernel
+sobel_x = np.array([[-1, 0, 1],
+                     [-2, 0, 2],
+                     [-1, 0, 1]], dtype=float)
+
+image = np.random.rand(8, 8)
+edges = convolve2d(image, sobel_x, padding=1)
+print(f"Input shape:  {image.shape}")
+print(f"Output shape: {edges.shape}")
+```
+
+In practice, PyTorch's `nn.Conv2d` implements the same operation for batches of multi-channel feature maps, with learnable kernels optimized by backpropagation.

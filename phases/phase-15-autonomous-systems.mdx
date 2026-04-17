@@ -1,0 +1,128 @@
+---
+title: 'Phase 15: Autonomous Systems — Agents Without Supervision'
+description: 'Design agents that run without human intervention: autonomous loops, self-healing, eval-driven cycles, cost control, and safety boundaries.'
+keywords: ['autonomous agents', 'self-healing', 'autonomous loop', 'human-in-the-loop', 'cost-aware AI', 'observability', 'safety boundaries']
+---
+
+Phase 15 takes everything from Phase 14 and removes the human from the loop — carefully. You learn what makes a system genuinely autonomous, how to build feedback loops that let agents recover from their own failures, how to keep costs under control, and critically, how to define safety boundaries that prevent agents from doing things they should not.
+
+<Note>
+  **Status: Planned (⬚)** — 11 lessons, ~11 hours. All lessons are queued for development following Phase 14. Check the [ROADMAP](https://github.com/rohitg00/ai-engineering-from-scratch/blob/main/ROADMAP.md) for the latest status.
+</Note>
+
+## What you will build
+
+The capstone of this phase is a fully autonomous coding agent: given a task (a bug report, a feature request, a failing test), it reads the codebase, writes a fix, runs the tests, iterates on failures, and commits the result — without human intervention.
+
+## Lesson table
+
+| # | Lesson | Status | Est. | Lang |
+|:---:|--------|:------:|------|------|
+| 01 | What Makes a System Autonomous | ⬚ | ~45 min | — |
+| 02 | Autonomous Loops | ⬚ | ~75 min | TypeScript, Python |
+| 03 | Self-Healing Agents | ⬚ | ~75 min | TypeScript |
+| 04 | AutoResearch: Autonomous Research | ⬚ | ~75 min | TypeScript, Python |
+| 05 | Eval-Driven Loops | ⬚ | ~45 min | TypeScript |
+| 06 | Human-in-the-Loop | ⬚ | ~45 min | TypeScript |
+| 07 | Continuous Agents | ⬚ | ~45 min | TypeScript |
+| 08 | Cost-Aware Autonomous Systems | ⬚ | ~45 min | TypeScript |
+| 09 | Monitoring & Observability | ⬚ | ~45 min | TypeScript, Rust |
+| 10 | Safety Boundaries | ⬚ | ~45 min | TypeScript |
+| 11 | Build an Autonomous Coding Agent | ⬚ | ~120 min | TypeScript |
+
+## Key concepts
+
+### What makes a system autonomous
+
+A system is autonomous when it can complete a goal without requiring human input at each step. That requires four properties:
+
+1. **Perception** — the agent can observe its environment (read files, call APIs, run tests, check logs)
+2. **Planning** — it can decompose a goal into actionable steps and adapt when steps fail
+3. **Execution** — it can take actions that change state in the world
+4. **Feedback** — it can evaluate whether its actions moved toward the goal and correct course
+
+A supervised agent (human approves every action) is not autonomous. An agent that runs indefinitely without any stopping condition is not safe. Autonomy lives in the space between.
+
+### The autonomous loop pattern
+
+The autonomous loop is the agent loop from Phase 14 with two additions: an **outer evaluation cycle** and a **termination condition** beyond `max_turns`.
+
+```
+OUTER LOOP (autonomous cycle)
+├── Generate plan
+├── INNER LOOP (agent loop)
+│   ├── Think → Tool → Result → repeat
+│   └── Exit: answer or max_turns
+├── Evaluate result against success criteria
+├── If success → terminate
+├── If failure and retries remain → revise plan
+└── If max_retries → escalate or abort
+```
+
+The outer loop is what makes the system autonomous: it can try, fail, diagnose, and retry without human involvement.
+
+### Self-healing agents
+
+A self-healing agent detects its own failures and corrects them. Lesson 03 covers:
+
+- **Error classification** — distinguish retriable errors (network timeout) from fatal ones (missing permissions)
+- **Diagnostic prompts** — have the agent analyze its own failure trace and propose a fix
+- **Alternative strategies** — if tool A fails, try tool B; if approach X fails, try approach Y
+- **Escalation** — after N failed attempts, surface the problem to a human rather than looping forever
+
+### Eval-driven loops
+
+Lesson 05 covers autonomous evaluation cycles: the agent generates a solution, runs a test suite, reads the results, and iterates until all tests pass. This is the same pattern used by autonomous coding systems like SWE-bench solvers.
+
+The key insight: you must define success criteria upfront. An agent without a measurable goal cannot know when to stop.
+
+### Human-in-the-loop
+
+Full autonomy is not always desirable. Lesson 06 covers patterns for inserting human checkpoints:
+
+- **Approval gates** — agent pauses before high-impact actions (deleting files, sending emails, making payments)
+- **Confidence thresholds** — agent escalates when it detects ambiguity or low confidence
+- **Async approval** — agent queues an action and continues other work while waiting for human review
+- **Audit trails** — every action is logged so humans can review what happened
+
+### Cost-aware systems
+
+Autonomous agents can run for many turns and make many LLM calls. Without cost controls, a single run can consume hundreds of dollars. Lesson 08 covers:
+
+- Token budgets per task
+- Model routing (use a cheap model for classification, a capable model for generation)
+- Caching repeated prompts and tool results
+- Monitoring cumulative cost and halting when budget is exhausted
+
+### Monitoring & observability
+
+Lesson 09 covers what to measure and how to measure it. Rust is used here for the metrics collection layer (low overhead, no GC pauses). Key signals:
+
+| Signal | What it tells you |
+|--------|------------------|
+| Turn count per task | Whether the agent is getting stuck in a loop |
+| Token usage per turn | Whether context is growing unboundedly |
+| Tool error rate | Whether external tools are flaky |
+| Task completion rate | Whether the agent is solving problems |
+| Time to completion | Whether the system is fast enough for your use case |
+
+### Safety boundaries
+
+Lesson 10 covers how to define and enforce what an autonomous agent is allowed to do:
+
+- **Allow lists** — only permit specific tool calls or file paths
+- **Deny lists** — block destructive operations (rm -rf, DROP TABLE, mass email)
+- **Rate limits** — cap the number of external API calls per minute
+- **Scope limits** — restrict the agent to a specific directory, repository, or data source
+- **Kill switches** — a mechanism to halt the agent immediately from outside the loop
+
+## Languages
+
+- TypeScript — agent loop, self-healing, eval-driven cycles, cost tracking
+- Python — research agents, evaluation harnesses
+- Rust — metrics collection, observability layer (lesson 09)
+
+## Prerequisites
+
+- Phase 14 (Agent Engineering) — the agent loop, memory, planning, hooks, error recovery
+- Phase 17 (Infrastructure & Production) — covers observability tooling in depth

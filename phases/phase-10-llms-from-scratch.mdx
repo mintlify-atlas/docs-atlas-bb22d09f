@@ -1,0 +1,289 @@
+---
+title: "Phase 10: Build & Train LLMs from Scratch (18 hrs)"
+description: "Build and align large language models from scratch — tokenizers, mini GPT pre-training, RLHF, DPO, quantization, and inference optimization."
+keywords: ["LLMs", "GPT", "pre-training", "tokenizers", "BPE", "RLHF", "DPO", "quantization", "SFT", "distributed training"]
+---
+
+Phase 10 takes you inside the black box. Instead of calling an API, you build the model. You implement tokenizers, construct a GPT architecture in pure NumPy, pre-train it on real text, then align it with SFT, RLHF, and DPO — the same pipeline used to produce ChatGPT and Claude. The phase closes with production concerns: quantization, inference optimization, and benchmarking.
+
+<Note>
+  **Phase status: 🚧 In progress (~18 hours)**
+
+  11 of 14 lessons are complete. Constitutional AI (09), Building a Complete LLM Pipeline (13), and Open Models walkthroughs (14) are planned.
+</Note>
+
+## Lessons
+
+| # | Lesson | Status | Est. |
+|:---:|--------|:------:|-----:|
+| 01 | Tokenizers: BPE, WordPiece, SentencePiece | ✅ | ~45 min |
+| 02 | Building a Tokenizer from Scratch | ✅ | ~75 min |
+| 03 | Data Pipelines for Pre-Training | ✅ | ~75 min |
+| 04 | Pre-Training a Mini GPT (124M) | ✅ | ~120 min |
+| 05 | Distributed Training, FSDP, DeepSpeed | ✅ | ~75 min |
+| 06 | Instruction Tuning — SFT | ✅ | ~75 min |
+| 07 | RLHF — Reward Model + PPO | ✅ | ~75 min |
+| 08 | DPO — Direct Preference Optimization | ✅ | ~75 min |
+| 09 | Constitutional AI & Self-Improvement | ⬚ | ~45 min |
+| 10 | Evaluation — Benchmarks, Evals, LM Harness | ✅ | ~75 min |
+| 11 | Quantization: INT8, GPTQ, AWQ, GGUF | ✅ | ~75 min |
+| 12 | Inference Optimization | ✅ | ~75 min |
+| 13 | Building a Complete LLM Pipeline | ⬚ | ~120 min |
+| 14 | Open Models — Architecture Walkthroughs | ⬚ | ~45 min |
+
+---
+
+## Tokenizers
+
+Your LLM does not read English. It reads integers. The tokenizer decides whether those integers carry meaning or waste it.
+
+Every modern LLM uses **subword tokenization** — a middle ground between character-level (too many tokens) and word-level (unknown word problem). Three algorithms dominate:
+
+<CardGroup cols={3}>
+  <Card title="BPE" icon="merge">
+    Byte Pair Encoding. Iteratively merges the most frequent adjacent pair of tokens. Used by GPT-2, GPT-4, Llama 3. Byte-level BPE (operating on raw bytes 0–255) guarantees no unknown tokens.
+  </Card>
+  <Card title="WordPiece" icon="split">
+    Merges the pair that maximizes `count(AB) / (count(A) * count(B))` — co-occurrence surprise rather than raw frequency. Used by BERT with a 30,522-token vocabulary.
+  </Card>
+  <Card title="SentencePiece" icon="globe">
+    Language-agnostic: treats the input as a raw Unicode stream including whitespace. No pre-tokenization step. Supports BPE and Unigram modes. Used by Llama 2 and T5.
+  </Card>
+</CardGroup>
+
+### Vocabulary size tradeoffs
+
+| Model | Vocab size | Tokenizer | Avg tokens per English word |
+|-------|-----------|-----------|---------------------------|
+| BERT | 30,522 | WordPiece | ~1.4 |
+| GPT-2 | 50,257 | Byte-level BPE | ~1.3 |
+| Llama 2 | 32,000 | SentencePiece BPE | ~1.4 |
+| GPT-4 | ~100,256 | Byte-level BPE | ~1.2 |
+| Llama 3 | 128,256 | Byte-level BPE (tiktoken) | ~1.1 |
+| GPT-4o | 200,019 | Byte-level BPE | ~1.0 |
+
+Larger vocabularies compress text more aggressively — a 128K vocabulary model may need 30% fewer tokens for the same English paragraph as a 32K vocabulary model, which directly reduces inference compute. The cost: a bigger embedding matrix. For a 128K vocabulary with 4,096-dimensional embeddings, the embedding matrix alone is 524 million parameters.
+
+### BPE from scratch
+
+The lesson builds a byte-level BPE tokenizer with no dependencies. The core training loop:
+
+```python
+from collections import Counter
+
+class BPETokenizer:
+    def __init__(self):
+        self.merges = {}
+        self.vocab = {}
+
+    def _get_pairs(self, tokens):
+        pairs = Counter()
+        for i in range(len(tokens) - 1):
+            pairs[(tokens[i], tokens[i + 1])] += 1
+        return pairs
+
+    def _merge_pair(self, tokens, pair, new_token):
+        merged = []
+        i = 0
+        while i < len(tokens):
+            if i < len(tokens) - 1 and tokens[i] == pair[0] and tokens[i + 1] == pair[1]:
+                merged.append(new_token)
+                i += 2
+            else:
+                merged.append(tokens[i])
+                i += 1
+        return merged
+
+    def train(self, text, num_merges):
+        tokens = list(text.encode("utf-8"))
+        self.vocab = {i: bytes([i]) for i in range(256)}
+
+        for i in range(num_merges):
+            pairs = self._get_pairs(tokens)
+            if not pairs:
+                break
+            best_pair = max(pairs, key=pairs.get)
+            new_token = 256 + i
+            tokens = self._merge_pair(tokens, best_pair, new_token)
+            self.merges[best_pair] = new_token
+            self.vocab[new_token] = self.vocab[best_pair[0]] + self.vocab[best_pair[1]]
+
+        return self
+
+    def encode(self, text):
+        tokens = list(text.encode("utf-8"))
+        for pair, new_token in self.merges.items():
+            tokens = self._merge_pair(tokens, pair, new_token)
+        return tokens
+
+    def decode(self, tokens):
+        byte_sequence = b"".join(self.vocab[t] for t in tokens)
+        return byte_sequence.decode("utf-8", errors="replace")
+```
+
+The merge table is the tokenizer. Encoding applies merges in the exact order they were learned — order matters because later merges depend on earlier ones. The production tiktoken library uses the same algorithm, implemented in Rust, trained on hundreds of gigabytes with 100,000 merges instead of dozens.
+
+---
+
+## Pre-training a mini GPT
+
+Lesson 04 implements a full GPT-style model in pure NumPy — no PyTorch, no frameworks. The goal is to understand every computation before the framework abstracts it away.
+
+The `MiniGPT` class wires together embeddings, transformer blocks, and a causal language modeling head:
+
+```python
+class MiniGPT:
+    def __init__(self, vocab_size=50257, embed_dim=768, num_heads=12,
+                 num_layers=12, max_seq_len=1024, ff_dim=3072):
+        self.embedding = Embedding(vocab_size, embed_dim, max_seq_len)
+        self.blocks = [
+            TransformerBlock(embed_dim, num_heads, ff_dim)
+            for _ in range(num_layers)
+        ]
+        self.ln_f = LayerNorm(embed_dim)
+        self.vocab_size = vocab_size
+        self.embed_dim = embed_dim
+
+    def forward(self, token_ids):
+        seq_len = token_ids.shape[-1]
+        mask = np.triu(np.full((seq_len, seq_len), -1e9), k=1)  # causal mask
+
+        x = self.embedding.forward(token_ids)
+        for block in self.blocks:
+            x = block.forward(x, mask)
+        x = self.ln_f.forward(x)
+
+        logits = x @ self.embedding.token_embed.T  # weight tying
+        return logits
+```
+
+Each `TransformerBlock` is a pre-norm residual block — LayerNorm applied before the sublayer, not after:
+
+```python
+class TransformerBlock:
+    def __init__(self, embed_dim, num_heads, ff_dim):
+        self.ln1 = LayerNorm(embed_dim)
+        self.attn = MultiHeadAttention(embed_dim, num_heads)
+        self.ln2 = LayerNorm(embed_dim)
+        self.ffn = FeedForward(embed_dim, ff_dim)
+
+    def forward(self, x, mask=None):
+        x = x + self.attn.forward(self.ln1.forward(x), mask)
+        x = x + self.ffn.forward(self.ln2.forward(x))
+        return x
+```
+
+The training loop samples random windows of text, runs a forward pass, computes cross-entropy loss, and manually backpropagates gradients through each layer with no autograd:
+
+```python
+def train_mini_gpt(text, vocab_size=256, embed_dim=128, num_heads=4,
+                   num_layers=4, seq_len=64, num_steps=200, lr=3e-4):
+    tokens = np.array(list(text.encode("utf-8")[:2048]))
+    model = MiniGPT(
+        vocab_size=vocab_size, embed_dim=embed_dim, num_heads=num_heads,
+        num_layers=num_layers, max_seq_len=seq_len, ff_dim=embed_dim * 4
+    )
+
+    for step in range(num_steps):
+        start_idx = np.random.randint(0, max(1, len(tokens) - seq_len - 1))
+        batch_tokens = tokens[start_idx:start_idx + seq_len + 1]
+
+        input_ids = batch_tokens[:-1].reshape(1, -1)
+        target_ids = batch_tokens[1:].reshape(1, -1)
+
+        # forward pass → loss → manual backward → weight update
+        ...
+
+        if step % 20 == 0:
+            print(f"Step {step:4d} | Loss: {loss:.4f}")
+
+    return model
+```
+
+The same file includes `parameter_breakdown()` — a utility that computes exact parameter counts for the GPT-2 family using the architectural formulas:
+
+```
+GPT-2 Small (124M):  12 layers, 12 heads, 768 dims
+GPT-2 Medium (345M): 24 layers, 16 heads, 1024 dims
+GPT-2 Large (762M):  36 layers, 20 heads, 1280 dims
+GPT-2 XL (1.5B):     48 layers, 25 heads, 1600 dims
+```
+
+---
+
+## Alignment: SFT → RLHF → DPO
+
+Pre-training produces a model that predicts text. Alignment makes it helpful, harmless, and honest. The course covers three alignment techniques in sequence:
+
+<CardGroup cols={3}>
+  <Card title="SFT" icon="chalkboard">
+    **Supervised Fine-Tuning.** Fine-tune on human-written (instruction, response) pairs. Teaches the model to follow instructions. Requires high-quality demonstrations; quality matters more than quantity.
+  </Card>
+  <Card title="RLHF" icon="arrow-up-right">
+    **Reinforcement Learning from Human Feedback.** Train a reward model on human preference comparisons, then use PPO to optimize the language model against that reward. More complex but produces stronger alignment.
+  </Card>
+  <Card title="DPO" icon="scale-balanced">
+    **Direct Preference Optimization.** Skips the reward model entirely. Directly optimizes on preference pairs using a closed-form objective derived from the RLHF framework. Simpler to implement, stable to train, competitive results.
+  </Card>
+</CardGroup>
+
+The progression SFT → RLHF → DPO mirrors the history of the field. SFT alone produces capable but obsequious models. RLHF (as used in the original InstructGPT paper) adds human preference signal but requires a separate reward model and online RL. DPO (Rafailov et al., 2023) collapses the pipeline into a single offline training step.
+
+---
+
+## Quantization
+
+A 7B parameter model in FP32 needs 28 GB of VRAM. Quantization reduces that by storing weights in lower-precision formats:
+
+<CardGroup cols={2}>
+  <Card title="INT8 (LLM.int8)" icon="memory">
+    Post-training quantization to 8-bit integers. Roughly 2× memory reduction with minimal quality loss. Works well for inference; not for training. The `bitsandbytes` library implements this for Hugging Face models.
+  </Card>
+  <Card title="GPTQ" icon="gauge">
+    Group-wise quantization that applies 4-bit quantization per group of weights, calibrating each group independently. Achieves 4× compression with near-original accuracy on most tasks.
+  </Card>
+  <Card title="AWQ" icon="bolt">
+    Activation-aware Weight Quantization. Identifies the small fraction of weights that are "salient" based on activation magnitudes and preserves their precision. More accurate than GPTQ at the same bit width.
+  </Card>
+  <Card title="GGUF" icon="cube">
+    The format used by `llama.cpp` for CPU inference. Supports mixed-precision quantization (Q4_K_M, Q5_K_M, Q8_0, etc.) and runs quantized models on consumer hardware without a GPU.
+  </Card>
+</CardGroup>
+
+---
+
+## Evaluation
+
+Lesson 10 covers model evaluation using standard benchmarks and the `lm-evaluation-harness` framework. Key benchmarks:
+
+| Benchmark | What it measures |
+|-----------|-----------------|
+| MMLU | Multitask language understanding across 57 subjects |
+| HellaSwag | Commonsense reasoning / sentence completion |
+| TruthfulQA | Tendency to produce truthful rather than plausible-sounding answers |
+| HumanEval | Functional correctness of generated code (pass@k) |
+| GSM8K | Grade-school math word problems requiring multi-step reasoning |
+| GPQA | Graduate-level science questions — tests deep expertise |
+
+Evaluation is distinct from loss. A model can overfit to low perplexity on validation text while performing poorly on downstream tasks. Benchmark-based evaluation measures what actually matters for deployment.
+
+---
+
+## Inference optimization
+
+Lesson 12 covers the techniques that make LLM serving economically viable:
+
+<CardGroup cols={2}>
+  <Card title="KV Cache" icon="database">
+    Store the key and value tensors from previous tokens so attention does not recompute them on every generation step. Essential for autoregressive generation — without it, each new token requires O(n²) work.
+  </Card>
+  <Card title="Flash Attention" icon="zap">
+    Reorders the attention computation to minimize HBM reads/writes using tiling. Achieves the same mathematical result as standard attention but 2–4× faster with O(n) memory instead of O(n²).
+  </Card>
+  <Card title="Continuous Batching" icon="layers">
+    Serve multiple requests at different generation stages simultaneously by treating each token step as a schedulable unit. Increases GPU utilization from ~30% to >80% in production.
+  </Card>
+  <Card title="Speculative Decoding" icon="forward">
+    Use a small draft model to generate candidate tokens, then verify them in parallel with the large model. Achieves 2–3× throughput when the draft model has high acceptance rates.
+  </Card>
+</CardGroup>

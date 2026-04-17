@@ -1,0 +1,197 @@
+---
+title: "Phase 1: Math Foundations for AI & ML"
+description: "Master the linear algebra, calculus, probability, and optimization that power every AI algorithm — 22 lessons, ~23 hours, implemented in Python and Julia."
+keywords: ["linear algebra", "calculus", "probability", "optimization", "SVD", "tensors", "information theory", "PCA", "gradient descent", "math for machine learning"]
+sidebarTitle: "Phase 1: Math Foundations"
+---
+
+Every AI algorithm — from a simple linear classifier to a billion-parameter language model — reduces to a handful of mathematical operations: matrix multiplications, gradient computations, probability distributions, and optimization steps. Phase 1 builds genuine intuition for each of these, not through abstract proofs, but through code. Every concept is implemented from scratch in Python, with several lessons offering parallel Julia implementations to show how numerical computing looks in a language designed for it. By the end, you won't just recognize terms like "eigenvalue" or "KL divergence" — you'll have built them and seen exactly how they behave.
+
+<Note>
+All 22 Phase 1 lessons are complete (✅). Languages used: Python and Julia. Estimated total time: ~23 hours.
+</Note>
+
+## Phase overview
+
+| Stat | Value |
+|------|-------|
+| Lessons | 22 |
+| Estimated time | ~23 hours |
+| Status | ✅ Complete |
+| Languages | Python, Julia |
+| Lesson types | 5 Learn · 17 Build |
+
+## Lesson catalog
+
+| # | Lesson | Type | Languages | Status | Est. |
+|:---:|--------|:----:|-----------|:------:|------|
+| 01 | Linear Algebra Intuition | Learn | Python, Julia | ✅ | ~45 min |
+| 02 | Vectors, Matrices & Operations | Build | Python, Julia | ✅ | ~75 min |
+| 03 | Matrix Transformations & Eigenvalues | Build | Python, Julia | ✅ | ~75 min |
+| 04 | Calculus for ML: Derivatives & Gradients | Learn | Python | ✅ | ~45 min |
+| 05 | Chain Rule & Automatic Differentiation | Build | Python | ✅ | ~75 min |
+| 06 | Probability & Distributions | Learn | Python | ✅ | ~45 min |
+| 07 | Bayes' Theorem & Statistical Thinking | Build | Python | ✅ | ~75 min |
+| 08 | Optimization: Gradient Descent Family | Build | Python | ✅ | ~75 min |
+| 09 | Information Theory: Entropy, KL Divergence | Learn | Python | ✅ | ~45 min |
+| 10 | Dimensionality Reduction: PCA, t-SNE, UMAP | Build | Python | ✅ | ~75 min |
+| 11 | Singular Value Decomposition | Build | Python, Julia | ✅ | ~75 min |
+| 12 | Tensor Operations | Build | Python | ✅ | ~75 min |
+| 13 | Numerical Stability | Build | Python | ✅ | ~45 min |
+| 14 | Norms & Distances | Build | Python | ✅ | ~45 min |
+| 15 | Statistics for ML | Build | Python | ✅ | ~45 min |
+| 16 | Sampling Methods | Build | Python | ✅ | ~75 min |
+| 17 | Linear Systems | Build | Python | ✅ | ~75 min |
+| 18 | Convex Optimization | Build | Python | ✅ | ~75 min |
+| 19 | Complex Numbers for AI | Learn | Python | ✅ | ~45 min |
+| 20 | The Fourier Transform | Build | Python | ✅ | ~75 min |
+| 21 | Graph Theory for ML | Build | Python | ✅ | ~45 min |
+| 22 | Stochastic Processes | Learn | Python | ✅ | ~45 min |
+
+<Tabs>
+  <Tab title="Build lessons (17)">
+    Build lessons implement the concept from scratch in pure Python (no NumPy shortcuts until the "Use It" step), then re-implement using the standard library or framework. Key Build lessons:
+
+    - **05 – Chain Rule & Autodiff**: Build a scalar-valued automatic differentiation engine — the same mechanism inside PyTorch's autograd.
+    - **08 – Gradient Descent Family**: Implement SGD, momentum, RMSProp, and Adam from scratch and compare convergence on a toy loss surface.
+    - **10 – Dimensionality Reduction**: Implement PCA from scratch via eigendecomposition, then apply t-SNE and UMAP using scikit-learn.
+    - **11 – SVD**: Decompose matrices using the power iteration method, then verify against `numpy.linalg.svd`.
+    - **18 – Convex Optimization**: Implement gradient descent, projected gradient descent, and subgradient methods for constrained problems.
+    - **20 – Fourier Transform**: Implement the DFT from the definition and the FFT via the Cooley-Tukey algorithm.
+  </Tab>
+  <Tab title="Learn lessons (5)">
+    Learn lessons build conceptual understanding through diagrams, visualizations, and worked examples before any implementation:
+
+    - **01 – Linear Algebra Intuition**: What vectors and matrices *mean* geometrically — transformations, spans, and column spaces.
+    - **04 – Calculus for ML**: Derivatives as slopes, gradients as directions, and the chain rule as function composition.
+    - **06 – Probability & Distributions**: Discrete and continuous distributions, expectations, and why AI systems are inherently probabilistic.
+    - **09 – Information Theory**: Shannon entropy, cross-entropy loss, KL divergence, and why these appear everywhere in ML training objectives.
+    - **22 – Stochastic Processes**: Markov chains, random walks, and their role in diffusion models and MCMC sampling.
+  </Tab>
+</Tabs>
+
+## Key concepts
+
+<CardGroup cols={2}>
+  <Card title="Linear algebra" icon="grid-2x2">
+    Vectors, matrices, matrix multiplication, eigenvalues, eigenvectors, and singular value decomposition — the language in which neural network weights and data are expressed.
+  </Card>
+  <Card title="Calculus & automatic differentiation" icon="arrow-up-right">
+    Derivatives, partial derivatives, the chain rule, and how backpropagation is just the chain rule applied recursively across a computation graph.
+  </Card>
+  <Card title="Probability & Bayesian thinking" icon="chart-bar">
+    Probability distributions, conditional probability, Bayes' theorem, and maximum likelihood estimation — the statistical foundations of every supervised learning objective.
+  </Card>
+  <Card title="Optimization" icon="trending-down">
+    Gradient descent and its variants (momentum, Adam, AdamW), learning rate sensitivity, and convex vs. non-convex landscapes.
+  </Card>
+  <Card title="Information theory" icon="binary">
+    Shannon entropy, cross-entropy loss, KL divergence, and mutual information — the mathematical framework that explains why we use the loss functions we do.
+  </Card>
+  <Card title="Dimensionality reduction" icon="compress">
+    PCA via eigendecomposition, t-SNE for visualization, UMAP for structure-preserving projections, and SVD as the unifying tool.
+  </Card>
+</CardGroup>
+
+## What you'll ship from this phase
+
+- A **scalar autodiff engine** in pure Python — your own miniature version of PyTorch's autograd (lesson 05)
+- An **optimizer comparison notebook** benchmarking SGD, momentum, and Adam on the same loss surface (lesson 08)
+- A **PCA implementation** that compresses images via SVD and reconstructs them at varying rank (lessons 10, 11)
+- A **reusable prompt** for getting expert-level gradient debugging help from any AI assistant
+
+```python
+# Lesson 05: Chain Rule & Autodiff — scalar autodiff engine
+class Value:
+    """A scalar value with a gradient tape for automatic differentiation."""
+    def __init__(self, data, _children=(), _op=''):
+        self.data = data
+        self.grad = 0.0
+        self._backward = lambda: None
+        self._prev = set(_children)
+        self._op = _op
+
+    def __mul__(self, other):
+        other = other if isinstance(other, Value) else Value(other)
+        out = Value(self.data * other.data, (self, other), '*')
+
+        def _backward():
+            self.grad  += other.data * out.grad
+            other.grad += self.data  * out.grad
+        out._backward = _backward
+        return out
+
+    def __add__(self, other):
+        other = other if isinstance(other, Value) else Value(other)
+        out = Value(self.data + other.data, (self, other), '+')
+
+        def _backward():
+            self.grad  += out.grad
+            other.grad += out.grad
+        out._backward = _backward
+        return out
+
+    def backward(self):
+        # Topological sort then reverse-mode pass
+        topo, visited = [], set()
+        def build(v):
+            if v not in visited:
+                visited.add(v)
+                for child in v._prev:
+                    build(child)
+                topo.append(v)
+        build(self)
+        self.grad = 1.0
+        for node in reversed(topo):
+            node._backward()
+
+# Usage
+x = Value(2.0)
+y = Value(3.0)
+z = x * y + x   # z = 2*3 + 2 = 8
+z.backward()
+print(x.grad)   # dz/dx = y + 1 = 4.0
+print(y.grad)   # dz/dy = x     = 2.0
+```
+
+## Getting started with Phase 1
+
+<Steps>
+  <Step title="Confirm Phase 0 is complete">
+    You need Python 3.10+, a working virtual environment, and Jupyter. Run:
+    ```bash
+    python --version && jupyter --version
+    ```
+  </Step>
+  <Step title="Install phase dependencies">
+    ```bash
+    pip install numpy matplotlib scikit-learn
+    # For Julia lessons (optional):
+    # Install Julia from https://julialang.org/downloads/
+    ```
+  </Step>
+  <Step title="Start with lesson 01">
+    ```bash
+    cd phases/01-math-foundations/01-linear-algebra-intuition
+    python code/vectors.py
+    ```
+  </Step>
+  <Step title="Work through all 22 lessons in order">
+    The lessons build on each other — eigenvalues (lesson 03) are used in PCA (lesson 10), and autodiff (lesson 05) reappears in Phase 3's backpropagation lesson.
+  </Step>
+  <Step title="Check your understanding">
+    ```
+    /check-understanding 1
+    ```
+  </Step>
+</Steps>
+
+## Prerequisites
+
+- **Phase 0** complete (working Python environment)
+- Ability to write Python (loops, functions, classes)
+- No prior math beyond high-school algebra required — the Learn lessons build all needed intuition from scratch
+
+## What comes next
+
+After Phase 1, proceed to [Phase 2: ML Fundamentals](/phases/phase-2-ml-fundamentals) — 18 lessons applying your math foundations to classical machine learning algorithms, all implemented from scratch before introducing scikit-learn.

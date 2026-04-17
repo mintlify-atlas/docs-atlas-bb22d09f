@@ -1,0 +1,158 @@
+---
+title: 'Phase 19: Capstone Projects — Prove Everything You Learned'
+description: 'Five end-to-end portfolio projects: build a Mini GPT, Multimodal RAG System, Autonomous Research Agent, Multi-Agent Dev Team, and a Production AI Platform.'
+keywords: ['capstone', 'AI projects', 'mini GPT', 'multimodal RAG', 'autonomous agent', 'multi-agent', 'production AI platform']
+---
+
+Phase 19 is where you prove everything you learned. Each project combines multiple phases into a working system that you can deploy, demo, and ship. These are not exercises — they are portfolio pieces.
+
+<Note>
+  **Status: Planned (⬚)** — 5 projects, ~10 hours. All projects are queued for development. They build on phases across the course, so they are best attempted after completing the prerequisite phases. Check the [ROADMAP](https://github.com/rohitg00/ai-engineering-from-scratch/blob/main/ROADMAP.md) for the latest status.
+</Note>
+
+## Project table
+
+| # | Project | Phases | Est. | Lang |
+|:---:|---------|--------|------|------|
+| 01 | Build a Mini GPT & Chat Interface | 1, 3, 7, 10 | ~120 min | Python, TypeScript |
+| 02 | Build a Multimodal RAG System | 5, 11, 12, 13 | ~120 min | Python, TypeScript |
+| 03 | Build an Autonomous Research Agent | 14, 15, 6 | ~120 min | TypeScript, Python |
+| 04 | Build a Multi-Agent Dev Team | 14, 15, 16, 17 | ~120 min | TypeScript, Rust |
+| 05 | Build a Production AI Platform | All phases | ~120 min | Python, TypeScript, Rust |
+
+## Projects in detail
+
+<CardGroup cols={1}>
+  <Card title="Project 01: Build a Mini GPT & Chat Interface" icon="brain">
+    **Combines:** Phase 1 (Math), Phase 3 (Deep Learning Core), Phase 7 (Transformers), Phase 10 (LLMs from Scratch)
+
+    **Languages:** Python, TypeScript
+
+    Build a GPT-style language model from first principles and wrap it in a working chat interface.
+
+    **What you build:**
+    - A transformer architecture implemented from scratch in Python (no PyTorch for the core math)
+    - BPE tokenizer from Phase 10
+    - Pre-training loop on a small text corpus (Wikipedia subset or similar)
+    - Sampling with temperature, top-k, and top-p
+    - A TypeScript chat frontend that connects to your model via a REST API
+    - Export to ONNX for faster inference
+
+    **You will demonstrate:** that you understand attention, positional encoding, the training loop, and tokenization deeply enough to implement them from scratch — not just call a library.
+  </Card>
+
+  <Card title="Project 02: Build a Multimodal RAG System" icon="search">
+    **Combines:** Phase 5 (NLP), Phase 11 (LLM Engineering), Phase 12 (Multimodal AI), Phase 13 (Tools & Protocols)
+
+    **Languages:** Python, TypeScript
+
+    Build a retrieval-augmented generation system that can reason over text, images, and documents simultaneously.
+
+    **What you build:**
+    - A vector store that indexes both text embeddings and CLIP image embeddings
+    - A document ingestion pipeline supporting PDF, HTML, and image inputs
+    - A multimodal query interface: ask questions in text, get answers grounded in text and images
+    - An MCP server that exposes the RAG system as a tool (from Phase 13)
+    - Reranking pipeline using a cross-encoder for higher precision
+    - Evaluation harness measuring retrieval precision and generation faithfulness
+
+    **You will demonstrate:** end-to-end RAG engineering — ingestion, embedding, retrieval, reranking, generation, and evaluation — across multiple modalities.
+  </Card>
+
+  <Card title="Project 03: Build an Autonomous Research Agent" icon="flask">
+    **Combines:** Phase 14 (Agent Engineering), Phase 15 (Autonomous Systems), Phase 6 (Speech & Audio)
+
+    **Languages:** TypeScript, Python
+
+    Build an agent that autonomously researches a topic, synthesizes findings, and produces a structured report — including a voiced summary using a TTS pipeline.
+
+    **What you build:**
+    - An autonomous agent loop with planning (TodoWrite DAGs) and memory
+    - Web research tools: search, page fetching, content extraction
+    - Self-healing retry logic when pages fail or searches return poor results
+    - A report generation pipeline that synthesizes research into structured Markdown
+    - An eval-driven loop: the agent re-researches if its report does not meet quality criteria
+    - A TTS pipeline (from Phase 6) that reads the report aloud
+    - Cost tracking and budget enforcement (from Phase 15)
+
+    **You will demonstrate:** that autonomous agents can complete multi-step research tasks reliably, with self-healing, quality evaluation, and cost control.
+  </Card>
+
+  <Card title="Project 04: Build a Multi-Agent Dev Team" icon="users">
+    **Combines:** Phase 14 (Agent Engineering), Phase 15 (Autonomous Systems), Phase 16 (Multi-Agent & Swarms), Phase 17 (Infrastructure & Production)
+
+    **Languages:** TypeScript, Rust
+
+    Build a team of specialized agents that collaborate to implement a feature end-to-end: from requirements to working, tested, deployed code.
+
+    **What you build:**
+    - A **Planner agent** that breaks a feature request into a DAG of tasks
+    - A **Researcher agent** that reads documentation and finds relevant code patterns
+    - A **Coder agent** that implements the feature in an isolated git worktree
+    - A **Reviewer agent** that checks the code for bugs, style issues, and test coverage
+    - A **Tester agent** that writes and runs tests, reporting results back to the Coder
+    - A communication protocol between agents using the A2A patterns from Phase 16
+    - Worktree isolation (from Phase 16 lesson 10) so agents do not interfere with each other
+    - A Rust-based shared state store for agent coordination
+    - Deployment via the infrastructure patterns from Phase 17
+
+    **You will demonstrate:** multi-agent coordination — role specialization, message-passing, parallel execution, and shared state — on a real software engineering task.
+  </Card>
+
+  <Card title="Project 05: Build a Production AI Platform" icon="rocket">
+    **Combines:** All phases
+
+    **Languages:** Python, TypeScript, Rust
+
+    The final capstone. Build and deploy a complete AI platform that integrates every major component from the course: model serving, agents, multi-agent coordination, observability, safety, and a user-facing interface.
+
+    **What you build:**
+    - A model serving layer (Phase 17) with autoscaling and prompt caching
+    - An agent runtime supporting both single agents and multi-agent swarms
+    - An MCP server registry that agents can discover and use at runtime
+    - Full observability: structured logging, distributed tracing, cost dashboards
+    - A CI/CD pipeline that runs evals on every change and blocks regressions
+    - A safety layer: input/output filtering, rate limiting, prompt injection detection
+    - A user-facing chat interface that routes queries to the right agent or model
+    - A Rust-based message bus for high-throughput inter-agent communication
+    - Ethics review checklist applied to the platform design (Phase 18)
+
+    **You will demonstrate:** that you can design, build, and operate a production-grade AI platform — not just run individual models or agents in isolation.
+  </Card>
+</CardGroup>
+
+## Choosing your starting point
+
+Not every learner will complete all five projects. Here is a guide:
+
+| Your background | Recommended projects |
+|-----------------|---------------------|
+| ML / deep learning background, new to agents | Projects 01, 03 |
+| Software engineer building AI products | Projects 02, 03, 04 |
+| ML engineer moving to production | Projects 02, 05 |
+| Agents / LLM engineering focus | Projects 03, 04, 05 |
+| Complete course (all phases) | All five, in order |
+
+## What each project produces
+
+Each capstone produces artifacts you can add to your portfolio:
+
+- **Source code** — a complete, runnable implementation in the course's languages
+- **A deployed demo** — instructions for deploying to a cloud environment or running locally
+- **An evaluation report** — benchmark results that show the system actually works
+- **A skills file** — a `SKILL.md` that other agents can load to understand and extend your system
+- **A prompt library** — reusable prompts produced during development
+
+## Prerequisites
+
+Projects vary in their prerequisites:
+
+| Project | Minimum prerequisites |
+|---------|----------------------|
+| 01 (Mini GPT) | Phases 1, 3, 7, 10 |
+| 02 (Multimodal RAG) | Phases 5, 11, 12, 13 |
+| 03 (Research Agent) | Phases 13, 14, 15 |
+| 04 (Dev Team) | Phases 14, 15, 16, 17 |
+| 05 (Production Platform) | All prior phases recommended |
+
+The course recommends completing prerequisites in order, but you can start a capstone early if you understand the relevant concepts from other sources.

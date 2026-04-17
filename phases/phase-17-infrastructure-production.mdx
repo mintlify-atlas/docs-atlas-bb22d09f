@@ -1,0 +1,120 @@
+---
+title: 'Phase 17: Infrastructure & Production — Deploy AI'
+description: 'Ship AI systems to production: model serving, Docker, Kubernetes, edge deployment, observability, CI/CD, A/B testing, and cost optimization.'
+keywords: ['model serving', 'Docker AI', 'Kubernetes AI', 'edge deployment', 'MLOps', 'CI/CD ML', 'observability', 'production AI']
+---
+
+Phase 17 is about taking AI systems from a working prototype to a production deployment. You cover model serving, containerization, orchestration, edge deployment, observability, cost optimization, CI/CD pipelines, A/B testing, data pipelines, and security — then wire everything together into a production AI platform.
+
+<Note>
+  **Status: In progress (🚧)** — 11 lessons, ~13 hours. Lessons 01 (Model Serving), 02 (Docker for AI Workloads), and 03 (Kubernetes for AI) are complete. Check the [ROADMAP](https://github.com/rohitg00/ai-engineering-from-scratch/blob/main/ROADMAP.md) for progress.
+</Note>
+
+## Lesson table
+
+| # | Lesson | Status | Est. | Lang |
+|:---:|--------|:------:|------|------|
+| 01 | Model Serving | ✅ | ~75 min | Python |
+| 02 | Docker for AI Workloads | ✅ | ~75 min | Python, Rust |
+| 03 | Kubernetes for AI | ✅ | ~75 min | Python |
+| 04 | Edge Deployment: ONNX, WASM | ⬚ | ~75 min | Python, Rust |
+| 05 | Observability | ⬚ | ~45 min | TypeScript, Rust |
+| 06 | Cost Optimization | ⬚ | ~45 min | TypeScript |
+| 07 | CI/CD for ML | ⬚ | ~75 min | Python |
+| 08 | A/B Testing & Feature Flags | ⬚ | ~45 min | Python, TypeScript |
+| 09 | Data Pipelines | ⬚ | ~75 min | Python, Rust |
+| 10 | Security: Red Teaming, Defense | ⬚ | ~45 min | Python, TypeScript |
+| 11 | Build a Production AI Platform | ⬚ | ~120 min | Python, TypeScript, Rust |
+
+## Completed lessons
+
+### Model serving (lesson 01 — complete)
+
+Model serving is the problem of taking a trained model and making it available to callers via a network API with acceptable latency, throughput, and cost. Key topics:
+
+- REST vs gRPC for inference endpoints
+- Batching: static batching, dynamic batching, continuous batching
+- Caching: KV cache for autoregressive models, prompt caching for repeated prefixes
+- Serving frameworks: vLLM, TGI, Triton Inference Server
+- Quantization at inference time: INT8, GPTQ, AWQ for lower memory and faster decoding
+
+### Docker for AI workloads (lesson 02 — complete)
+
+AI workloads have specific container requirements: GPU drivers, CUDA libraries, large model weights, and long startup times. Lesson 02 covers:
+
+- Multi-stage Dockerfiles that separate build-time dependencies from runtime
+- NVIDIA Container Toolkit for GPU access inside containers
+- Volume mounts for model weight caching (avoid re-downloading on each start)
+- Health checks for inference endpoints
+- Rust is used for a sidecar process that monitors container resource usage
+
+### Kubernetes for AI (lesson 03 — complete)
+
+Running AI workloads on Kubernetes introduces GPU scheduling, pod disruption budgets, and custom resource definitions. Key topics:
+
+- Node pools with GPU labels and taints
+- `requests` and `limits` for GPU resources (`nvidia.com/gpu`)
+- Horizontal pod autoscaling based on inference queue depth
+- Persistent volumes for shared model weight storage
+- KubeRay for distributed training and serving
+
+## Upcoming lessons
+
+<CardGroup cols={2}>
+  <Card title="Edge deployment (lesson 04)" icon="cpu">
+    Export models to ONNX and WebAssembly for deployment on devices without cloud connectivity. Rust-based inference runtime for edge hardware.
+  </Card>
+  <Card title="Observability (lesson 05)" icon="bar-chart">
+    Instrument AI systems with structured logging, distributed tracing (OpenTelemetry), and metrics. Rust for the metrics collection layer.
+  </Card>
+  <Card title="Cost optimization (lesson 06)" icon="trending-down">
+    Model routing (cheap model for classification, capable model for generation), prompt caching, request deduplication, and budget alerting.
+  </Card>
+  <Card title="CI/CD for ML (lesson 07)" icon="refresh-cw">
+    Automated evaluation pipelines that run on every pull request. Block merges that regress model quality. Deploy new model versions with zero downtime.
+  </Card>
+  <Card title="A/B testing (lesson 08)" icon="git-merge">
+    Shadow deployments, canary releases, and feature flags for model versions. Measure business metrics alongside technical metrics.
+  </Card>
+  <Card title="Security (lesson 10)" icon="shield">
+    Prompt injection attacks, model extraction, output filtering, and red-teaming LLM APIs. Defense-in-depth for production AI systems.
+  </Card>
+</CardGroup>
+
+## The production AI platform (lesson 11 — capstone)
+
+The final lesson wires all previous lessons into a single deployable system:
+
+- A Kubernetes cluster with GPU node pools
+- An inference service with autoscaling and prompt caching
+- An agent runtime with observability and cost tracking
+- A CI/CD pipeline with automated evals
+- An A/B testing framework for model version rollouts
+- A security layer with input/output filtering
+
+This is the system you will extend in the Phase 19 capstone project.
+
+## What breaks in production
+
+Production AI systems fail in ways that development environments do not reveal:
+
+| Failure mode | Symptom | Fix |
+|-------------|---------|-----|
+| Context window overflow | Errors on long conversations | Implement context compression (Phase 14 lesson 06) |
+| GPU memory exhaustion | OOM errors under load | Tune batch size, use quantization |
+| Flaky external tools | High tool error rate | Retry with backoff, circuit breakers |
+| Prompt injection | Unexpected agent behavior | Input sanitization, output filtering |
+| Cost overrun | Unexpected bill | Token budgets, model routing, caching |
+| Latency regression | Slow responses after model update | Canary deployments, latency SLOs |
+
+## Languages
+
+- Python — model serving, Kubernetes manifests, CI/CD, data pipelines
+- TypeScript — observability dashboards, cost tracking, A/B testing
+- Rust — high-performance inference sidecars, metrics collection, data pipeline stages
+
+## Prerequisites
+
+- Phase 14 (Agent Engineering) — for understanding what you are deploying
+- Phase 10 (LLMs from Scratch) — quantization and inference optimization concepts
+- Phase 11 (LLM Engineering) — prompt caching, cost management

@@ -1,0 +1,96 @@
+---
+title: 'Phase 13: Tools & Protocols — Connect AI to the World'
+description: 'Master function calling, MCP servers and clients, structured output schemas, browser automation, and API design to connect LLMs with the real world.'
+keywords: ['MCP', 'function calling', 'tool use', 'browser automation', 'model context protocol', 'AI tools']
+---
+
+Phase 13 covers the interfaces between AI models and the outside world. You will move from raw function calling through the Model Context Protocol (MCP), build both MCP servers and clients from scratch, design AI-optimized APIs, and automate browsers — finishing with a complete, composable tool ecosystem.
+
+<Note>
+  **Status: Planned (⬚)** — 10 lessons, ~11 hours. All lessons are queued for development. Check the [ROADMAP](https://github.com/rohitg00/ai-engineering-from-scratch/blob/main/ROADMAP.md) for the latest progress.
+</Note>
+
+## What you will build
+
+<CardGroup cols={2}>
+  <Card title="MCP server" icon="server">
+    A working Model Context Protocol server that exposes tools, resources, and prompts to any MCP-compatible client.
+  </Card>
+  <Card title="MCP client" icon="plug">
+    A client that connects to MCP servers, discovers tools dynamically, and integrates them into an agent loop.
+  </Card>
+  <Card title="Browser automation agent" icon="globe">
+    A TypeScript agent that controls a real browser to scrape, fill forms, and interact with web applications.
+  </Card>
+  <Card title="Complete tool ecosystem" icon="toolbox">
+    A composable library of tools (file I/O, web search, shell, browser) wired to a shared tool registry.
+  </Card>
+</CardGroup>
+
+## Lesson table
+
+| # | Lesson | Status | Est. | Lang |
+|:---:|--------|:------:|------|------|
+| 01 | Function Calling Deep Dive | ⬚ | ~45 min | Python, TypeScript |
+| 02 | Tool Use Patterns | ⬚ | ~45 min | TypeScript |
+| 03 | MCP: Model Context Protocol | ⬚ | ~45 min | — |
+| 04 | Building MCP Servers | ⬚ | ~75 min | TypeScript, Python |
+| 05 | Building MCP Clients | ⬚ | ~75 min | TypeScript, Python |
+| 06 | MCP Resources, Prompts & Sampling | ⬚ | ~45 min | TypeScript |
+| 07 | Structured Output Schemas | ⬚ | ~75 min | TypeScript, Python |
+| 08 | API Design for AI | ⬚ | ~75 min | TypeScript |
+| 09 | Browser Automation & Web Agents | ⬚ | ~75 min | TypeScript |
+| 10 | Build a Complete Tool Ecosystem | ⬚ | ~120 min | TypeScript, Python |
+
+## Key concepts
+
+### Function calling vs tool use
+
+Function calling is how an LLM outputs structured JSON instead of free text — signalling that it wants to invoke a specific function with specific arguments. Tool use is the broader pattern: registering a set of callable functions with the model, parsing the LLM's structured response, executing the function, and feeding the result back.
+
+Every agent framework builds on this loop. Phase 13 covers it from the API wire format all the way to patterns for retry, parallel tool calls, and schema validation.
+
+### Model Context Protocol (MCP)
+
+MCP is Anthropic's open standard for connecting LLMs to external data sources and tools. Instead of hardcoding tools into every application, MCP separates concerns: a **server** exposes capabilities (tools, resources, prompts) and a **client** (the agent) discovers and calls them at runtime.
+
+This matters because:
+- Tools are reusable across agents and applications
+- Servers can be built once and shared (e.g., a filesystem server, a GitHub server, a database server)
+- Clients do not need to know tool schemas at compile time
+
+MCP defines three primitives:
+
+| Primitive | What it is |
+|-----------|------------|
+| **Tools** | Functions the LLM can call (read file, run query, send email) |
+| **Resources** | Data the LLM can read (file contents, database rows, API responses) |
+| **Prompts** | Reusable prompt templates with dynamic arguments |
+
+### API design for AI
+
+Designing APIs for LLMs is different from designing APIs for humans. LLMs need:
+- Precise, unambiguous parameter names and descriptions
+- Narrow input/output schemas (avoid `any` or open-ended objects)
+- Error messages that explain what went wrong and how to fix it
+- Idempotent operations where possible (agents retry on failure)
+
+Lesson 08 covers these patterns in depth, including how to document your API so a model can use it correctly without human guidance.
+
+### Browser automation
+
+Lesson 09 covers Playwright-based browser control: navigating pages, clicking elements, filling forms, extracting structured data, and handling dynamic JavaScript-heavy sites. You will build a web agent capable of autonomous research across multiple pages.
+
+## Prerequisites
+
+- Phase 11 (LLM Engineering) — especially lessons 03 (structured outputs) and 09 (function calling & tool use)
+- Phase 14 (Agent Engineering) builds directly on this phase
+
+## What this phase produces
+
+Every lesson ships a reusable artifact. By the end of Phase 13 you will have:
+
+- MCP servers for filesystem, web search, and shell access
+- A generic MCP client library
+- A browser automation skill for your agent
+- A prompt library for tool schema design

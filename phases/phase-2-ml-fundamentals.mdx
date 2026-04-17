@@ -1,0 +1,184 @@
+---
+title: "Phase 2: ML Fundamentals — Classical Algorithms"
+description: "18 lessons, ~21 hours. Build regression, SVMs, and ensembles from scratch in Python, then use scikit-learn. Classical ML is the backbone of production AI."
+keywords: ["machine learning", "supervised learning", "unsupervised learning", "linear regression", "random forests", "SVM", "feature engineering", "model evaluation", "scikit-learn", "ML fundamentals"]
+sidebarTitle: "Phase 2: ML Fundamentals"
+---
+
+Classical machine learning is not obsolete — it powers the majority of production AI systems in use today. Phase 2 covers the full spectrum of supervised and unsupervised algorithms: from the geometry of linear regression to the ensemble dynamics of gradient boosting, from K-Means clustering to anomaly detection. Every algorithm is built from scratch in pure Python before being re-implemented with scikit-learn, so you understand what the library is doing — and when to reach for something else. By the end you'll have a complete mental model of the ML workflow: from raw data through feature engineering, model selection, hyperparameter tuning, and evaluation pipelines.
+
+<Note>
+All 18 Phase 2 lessons are complete (✅). Language: Python throughout. Estimated total time: ~21 hours.
+</Note>
+
+## Phase overview
+
+| Stat | Value |
+|------|-------|
+| Lessons | 18 |
+| Estimated time | ~21 hours |
+| Status | ✅ Complete |
+| Languages | Python |
+| Lesson types | 2 Learn · 16 Build |
+
+## Lesson catalog
+
+| # | Lesson | Type | Status | Est. |
+|:---:|--------|:----:|:------:|------|
+| 01 | What Is Machine Learning — Types & Taxonomy | Learn | ✅ | ~45 min |
+| 02 | Linear Regression from Scratch | Build | ✅ | ~75 min |
+| 03 | Logistic Regression & Classification | Build | ✅ | ~75 min |
+| 04 | Decision Trees & Random Forests | Build | ✅ | ~75 min |
+| 05 | Support Vector Machines | Build | ✅ | ~75 min |
+| 06 | K-Nearest Neighbors & Distance Metrics | Build | ✅ | ~75 min |
+| 07 | Unsupervised Learning — K-Means, DBSCAN | Build | ✅ | ~75 min |
+| 08 | Feature Engineering & Selection | Build | ✅ | ~75 min |
+| 09 | Model Evaluation — Metrics, Cross-Validation | Build | ✅ | ~75 min |
+| 10 | Bias, Variance & the Learning Curve | Learn | ✅ | ~45 min |
+| 11 | Ensemble Methods — Boosting, Bagging, Stacking | Build | ✅ | ~75 min |
+| 12 | Hyperparameter Tuning & AutoML | Build | ✅ | ~75 min |
+| 13 | ML Pipelines & Experiment Tracking | Build | ✅ | ~75 min |
+| 14 | Naive Bayes — Multinomial, Gaussian, Bernoulli | Build | ✅ | ~75 min |
+| 15 | Time Series Fundamentals | Build | ✅ | ~45 min |
+| 16 | Anomaly Detection | Build | ✅ | ~75 min |
+| 17 | Handling Imbalanced Data | Build | ✅ | ~75 min |
+| 18 | Feature Selection | Build | ✅ | ~75 min |
+
+<Tabs>
+  <Tab title="Supervised learning">
+    The supervised learning arc runs from lessons 02–06 and 11–14, covering the core regression and classification algorithms:
+
+    - **02 – Linear Regression**: Normal equation, gradient descent, closed-form vs. iterative solutions, MSE loss surface.
+    - **03 – Logistic Regression**: Sigmoid decision boundary, cross-entropy loss, multi-class via softmax.
+    - **04 – Decision Trees & Random Forests**: Gini impurity, information gain, pruning, and bagging for variance reduction.
+    - **05 – Support Vector Machines**: Maximum margin hyperplane, the kernel trick (RBF, polynomial), and the dual problem.
+    - **11 – Ensemble Methods**: AdaBoost (boosting), Random Forests (bagging), and Stacking with a meta-learner.
+    - **14 – Naive Bayes**: Gaussian, Multinomial, and Bernoulli variants — the fastest probabilistic classifier.
+  </Tab>
+  <Tab title="Unsupervised learning">
+    Unsupervised lessons teach you to find structure without labels:
+
+    - **07 – K-Means & DBSCAN**: Lloyd's algorithm from scratch, the elbow method, and DBSCAN for non-spherical clusters.
+    - **15 – Time Series Fundamentals**: Stationarity, autocorrelation, ARIMA, and sliding window feature extraction.
+    - **16 – Anomaly Detection**: Isolation Forest, one-class SVM, and statistical outlier detection.
+  </Tab>
+  <Tab title="Engineering & evaluation">
+    The engineering and evaluation lessons transform raw models into production-ready pipelines:
+
+    - **08 – Feature Engineering**: Encoding categoricals, scaling, polynomial features, interaction terms.
+    - **09 – Model Evaluation**: Precision, recall, F1, ROC-AUC, k-fold cross-validation, stratified splits.
+    - **12 – Hyperparameter Tuning**: Grid search, random search, and Bayesian optimization with Optuna.
+    - **13 – ML Pipelines**: `sklearn.Pipeline`, MLflow experiment tracking, reproducible runs.
+    - **17 – Imbalanced Data**: SMOTE, class weights, threshold calibration.
+    - **18 – Feature Selection**: Mutual information, recursive feature elimination (RFE), SHAP-based selection.
+  </Tab>
+</Tabs>
+
+## Key concepts
+
+<CardGroup cols={2}>
+  <Card title="Supervised learning taxonomy" icon="sitemap">
+    Regression vs. classification, parametric vs. non-parametric models, and when each algorithm class is the right tool — the mental model for navigating the algorithm zoo.
+  </Card>
+  <Card title="The bias-variance tradeoff" icon="scale">
+    Why high-capacity models overfit and low-capacity models underfit, how learning curves diagnose the problem, and how ensemble methods reduce both sources of error simultaneously.
+  </Card>
+  <Card title="Feature engineering" icon="wrench">
+    The art and science of turning raw data into informative signals — encoding, scaling, interaction features, and selection — often the highest-leverage step in any ML project.
+  </Card>
+  <Card title="Model evaluation" icon="chart-line">
+    Beyond accuracy: precision-recall tradeoffs, ROC curves, cross-validation, and why the metric you optimize must match the business objective.
+  </Card>
+  <Card title="Ensemble methods" icon="layers">
+    How bagging reduces variance (Random Forests), how boosting reduces bias (Gradient Boosting, AdaBoost), and how stacking combines diverse models via a meta-learner.
+  </Card>
+  <Card title="ML pipelines" icon="arrow-right-left">
+    Reproducible end-to-end workflows with `sklearn.Pipeline`, experiment tracking with MLflow, and hyperparameter search without data leakage.
+  </Card>
+</CardGroup>
+
+## What you'll ship from this phase
+
+- A **linear regression implementation** in ~50 lines of NumPy — gradient descent and normal equation both, with a comparison
+- A **Random Forest from scratch** that shows how bootstrapped trees combine for lower-variance predictions
+- A **model evaluation toolkit** (confusion matrix, ROC-AUC, k-fold CV) reusable across any binary classification problem
+- An **MLflow experiment tracking setup** that logs hyperparameter sweeps and stores the best model artifact
+
+```python
+# Lesson 02: Linear Regression from Scratch
+# Gradient descent implementation — no scikit-learn
+
+import numpy as np
+
+class LinearRegression:
+    def __init__(self, lr=0.01, n_iters=1000):
+        self.lr = lr
+        self.n_iters = n_iters
+        self.weights = None
+        self.bias = None
+
+    def fit(self, X, y):
+        n_samples, n_features = X.shape
+        self.weights = np.zeros(n_features)
+        self.bias = 0.0
+
+        for _ in range(self.n_iters):
+            y_pred = X @ self.weights + self.bias
+            dw = (2 / n_samples) * X.T @ (y_pred - y)
+            db = (2 / n_samples) * np.sum(y_pred - y)
+            self.weights -= self.lr * dw
+            self.bias    -= self.lr * db
+
+    def predict(self, X):
+        return X @ self.weights + self.bias
+
+    def mse(self, X, y):
+        return np.mean((self.predict(X) - y) ** 2)
+
+# Usage
+X = np.random.randn(100, 3)
+y = X @ np.array([2.0, -1.0, 0.5]) + 0.1 * np.random.randn(100)
+
+model = LinearRegression(lr=0.05, n_iters=500)
+model.fit(X, y)
+print(f"MSE: {model.mse(X, y):.4f}")
+print(f"Weights: {model.weights}")
+```
+
+## Getting started with Phase 2
+
+<Steps>
+  <Step title="Complete Phase 1">
+    Phase 2 assumes you can read and write gradient descent code. Lesson 08 (optimization) from Phase 1 is particularly relevant.
+  </Step>
+  <Step title="Install dependencies">
+    ```bash
+    pip install numpy scikit-learn pandas matplotlib mlflow optuna
+    ```
+  </Step>
+  <Step title="Start with lesson 01 — the taxonomy">
+    ```bash
+    cd phases/02-ml-fundamentals/01-what-is-machine-learning
+    cat docs/en.md
+    ```
+    This Learn lesson frames everything that follows and is worth spending 45 minutes on.
+  </Step>
+  <Step title="Build each algorithm from scratch before reading the Use It section">
+    The course's "Build It / Use It" structure means you implement the algorithm in pure Python first, then compare to scikit-learn. Don't skip to the library version.
+  </Step>
+  <Step title="Check your understanding">
+    ```
+    /check-understanding 2
+    ```
+  </Step>
+</Steps>
+
+## Prerequisites
+
+- **Phase 0** (working Python environment)
+- **Phase 1** lessons 02–08 at minimum (vectors, matrices, gradients, optimization)
+- Familiarity with Python classes and NumPy arrays
+
+## What comes next
+
+After Phase 2, proceed to [Phase 3: Deep Learning Core](/phases/phase-3-deep-learning) — 13 lessons that move from classical ML to neural networks, building a backpropagation engine, every standard layer type, and finally your own mini deep learning framework entirely from scratch.

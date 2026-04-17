@@ -1,0 +1,126 @@
+---
+title: 'Phase 5: NLP — Foundations to Advanced (~19 hrs)'
+description: '18 lessons, ~19 hours. Build NLP systems from tokenization and Word2Vec through seq2seq, attention, machine translation, and multilingual models in Python.'
+keywords: ['NLP', 'natural language processing', 'Word2Vec', 'tokenization', 'seq2seq', 'attention mechanism', 'machine translation', 'sentiment analysis', 'NER']
+---
+
+Language is the primary interface between humans and AI systems. This phase builds natural language processing from the ground up — starting with how text becomes numbers, moving through classical methods that still power production search engines, and arriving at the attention mechanism that underpins every modern language model. Every technique is implemented from scratch before being used through a library, so the mechanics are never hidden.
+
+<Note>
+  **Status: ⬚ Planned** — This phase is fully scoped. See the [roadmap](https://github.com/rohitg00/ai-engineering-from-scratch/blob/main/ROADMAP.md) for the latest progress.
+</Note>
+
+## Phase stats
+
+| Detail | Value |
+|--------|-------|
+| Lessons | 18 |
+| Estimated time | ~19 hours |
+| Status | ⬚ Planned |
+| Languages | Python |
+| Prerequisites | Phase 3 — Deep Learning Core |
+
+## Lessons
+
+| # | Lesson | Type | Lang | Status |
+|:---:|--------|:----:|------|:------:|
+| 01 | Text Processing: Tokenization, Stemming, Lemmatization | Build | 🐍 | ⬚ |
+| 02 | Bag of Words, TF-IDF & Text Representation | Build | 🐍 | ⬚ |
+| 03 | Word Embeddings: Word2Vec from Scratch | Build | 🐍 | ⬚ |
+| 04 | GloVe, FastText & Subword Embeddings | Build | 🐍 | ⬚ |
+| 05 | Sentiment Analysis | Build | 🐍 | ⬚ |
+| 06 | Named Entity Recognition (NER) | Build | 🐍 | ⬚ |
+| 07 | POS Tagging & Syntactic Parsing | Build | 🐍 | ⬚ |
+| 08 | Text Classification — CNNs & RNNs for Text | Build | 🐍 | ⬚ |
+| 09 | Sequence-to-Sequence Models | Build | 🐍 | ⬚ |
+| 10 | Attention Mechanism — The Breakthrough | Build | 🐍 | ⬚ |
+| 11 | Machine Translation | Build | 🐍 | ⬚ |
+| 12 | Text Summarization | Build | 🐍 | ⬚ |
+| 13 | Question Answering Systems | Build | 🐍 | ⬚ |
+| 14 | Information Retrieval & Search | Build | 🐍 | ⬚ |
+| 15 | Topic Modeling: LDA, BERTopic | Build | 🐍 | ⬚ |
+| 16 | Text Generation — Language Models Before Transformers | Build | 🐍 | ⬚ |
+| 17 | Chatbots: Rule-Based to Neural | Build | 🐍 | ⬚ |
+| 18 | Multilingual NLP | Build | 🐍 | ⬚ |
+
+## Key techniques and architectures
+
+<CardGroup cols={2}>
+  <Card title="Text representations" icon="font">
+    From bag-of-words and TF-IDF through dense word vectors (Word2Vec skip-gram and CBOW, GloVe global co-occurrence, FastText subword). Understand what each representation captures and what it loses.
+  </Card>
+  <Card title="Sequence models" icon="arrow-right-arrow-left">
+    CNNs and RNNs applied to variable-length text; encoder-decoder (seq2seq) architectures for translation and summarization; the bottleneck problem that motivated attention.
+  </Card>
+  <Card title="Attention mechanism" icon="crosshairs">
+    Bahdanau additive attention implemented from scratch — the direct precursor to transformer self-attention. Applied to machine translation and question answering.
+  </Card>
+  <Card title="Structured NLP tasks" icon="tags">
+    Sequence labeling for NER and POS tagging; span extraction for QA; topic modeling with LDA and BERTopic; multilingual tokenization and cross-lingual transfer.
+  </Card>
+</CardGroup>
+
+## What you'll build
+
+By the end of this phase you will have shipped:
+
+- A TF-IDF search engine over a document corpus with BM25-style ranking
+- Word2Vec trained from scratch on a text corpus, with a nearest-neighbor query tool
+- A sentiment classifier using an RNN, benchmarked against a CNN variant
+- A seq2seq machine translation model (English → French) with Bahdanau attention
+- An extractive and abstractive text summarizer
+- A question-answering system that reads a passage and extracts answer spans
+- An LDA topic model and a BERTopic cluster visualization
+- A multilingual tokenizer that handles subword segmentation across languages
+
+## Prerequisites
+
+<Tabs>
+  <Tab title="Required">
+    **Phase 3 — Deep Learning Core**: you need backpropagation, RNN training, and PyTorch basics before implementing seq2seq models. Lessons 1–11 are the minimum.
+  </Tab>
+  <Tab title="Recommended">
+    **Phase 1 — Math Foundations**, lessons 6–9 (probability, Bayes, information theory): TF-IDF is information-theoretic; Word2Vec uses noise-contrastive estimation; topic models are probabilistic. These concepts are clearer with the math background.
+  </Tab>
+</Tabs>
+
+## Core concept: Word2Vec skip-gram from scratch
+
+Word2Vec learns dense word representations by training a shallow neural network to predict context words from a center word. The learned weight matrix becomes the embedding lookup table.
+
+```python
+import numpy as np
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+class SkipGramWord2Vec:
+    """Word2Vec skip-gram with negative sampling."""
+
+    def __init__(self, vocab_size, embed_dim, lr=0.01):
+        # Two embedding matrices: center words and context words
+        self.W_in  = np.random.randn(vocab_size, embed_dim) * 0.01
+        self.W_out = np.random.randn(vocab_size, embed_dim) * 0.01
+        self.lr = lr
+
+    def forward(self, center_idx, context_idx, negative_idxs):
+        h = self.W_in[center_idx]                     # center word vector
+        pos_score = sigmoid(h @ self.W_out[context_idx])   # positive pair
+        neg_scores = sigmoid(-h @ self.W_out[negative_idxs].T)  # noise pairs
+
+        # Binary cross-entropy loss
+        loss = -np.log(pos_score + 1e-9) - np.sum(np.log(neg_scores + 1e-9))
+        return loss, h, pos_score, neg_scores
+
+    def get_embedding(self, word_idx):
+        """Average of input and output embeddings at inference time."""
+        return (self.W_in[word_idx] + self.W_out[word_idx]) / 2
+
+# After training, find nearest neighbors with cosine similarity
+def nearest_neighbors(query_vec, embeddings, top_k=5):
+    norms = np.linalg.norm(embeddings, axis=1, keepdims=True) + 1e-9
+    similarities = embeddings @ query_vec / (norms.squeeze() * np.linalg.norm(query_vec))
+    return np.argsort(similarities)[::-1][:top_k]
+```
+
+The insight: words that appear in similar contexts end up with similar vectors, even without any explicit semantic labels. This is the foundation on which modern contextualized embeddings (BERT, GPT) are built.

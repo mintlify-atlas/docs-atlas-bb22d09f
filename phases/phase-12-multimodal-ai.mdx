@@ -1,0 +1,327 @@
+---
+title: "Phase 12: Multimodal AI — Vision, Audio & Beyond (11 hrs)"
+description: "See, hear, and reason across modalities — CLIP architecture, vision-language models, multimodal RAG, agents, text-to-image, and text-to-video."
+keywords: ["multimodal AI", "CLIP", "vision-language models", "multimodal RAG", "text-to-image", "multimodal agents", "cross-modal alignment", "document understanding"]
+---
+
+Phase 12 moves beyond text. Modern AI systems see images, hear audio, read documents, and watch video — and reason across all of them simultaneously. This phase covers how multimodal representations work, the architecture behind landmark models like CLIP, and how to build systems that combine modalities in retrieval, agents, and generation pipelines.
+
+<Note>
+  **Phase status: ⬚ Planned (~11 hours)**
+
+  All 11 lessons are on the roadmap. This phase follows Phase 11 (LLM Engineering) and will be built using Python throughout, with TypeScript for the RAG (07) and agents (08) lessons.
+</Note>
+
+## Lessons
+
+| # | Lesson | Status | Est. |
+|:---:|--------|:------:|-----:|
+| 01 | Multimodal Representations | ⬚ | ~45 min |
+| 02 | CLIP: Vision + Language | ⬚ | ~75 min |
+| 03 | Vision-Language Models | ⬚ | ~45 min |
+| 04 | Audio-Language Models | ⬚ | ~45 min |
+| 05 | Document Understanding | ⬚ | ~75 min |
+| 06 | Video-Language Models | ⬚ | ~45 min |
+| 07 | Multimodal RAG | ⬚ | ~75 min |
+| 08 | Multimodal Agents | ⬚ | ~75 min |
+| 09 | Text-to-Image Pipelines | ⬚ | ~75 min |
+| 10 | Text-to-Video Pipelines | ⬚ | ~75 min |
+| 11 | Any-to-Any Models | ⬚ | ~45 min |
+
+---
+
+## Multimodal representations
+
+Different modalities live in different spaces. Text is a sequence of discrete tokens. Images are continuous pixel grids. Audio is a waveform sampled at 44kHz. Video is frames over time. A multimodal system must map all of these into a shared representation space where semantically related content — a photo of a dog and the word "dog" — is close together.
+
+Three approaches to cross-modal alignment:
+
+<CardGroup cols={3}>
+  <Card title="Contrastive learning" icon="intersect">
+    Train separate encoders for each modality and align their output spaces by pushing matching pairs together and non-matching pairs apart. Used by CLIP, ALIGN, and AudioCLIP. Simple, scalable, and produces general-purpose embeddings.
+  </Card>
+  <Card title="Generative alignment" icon="wand-magic-sparkles">
+    Train a model to generate one modality conditioned on another. An image captioner learns vision-language alignment as a byproduct of generating accurate captions. Used by BLIP, Flamingo, and CogVLM.
+  </Card>
+  <Card title="Unified tokenization" icon="grid">
+    Tokenize all modalities into a shared discrete vocabulary — images as VQ-VAE tokens, audio as codec tokens, text as BPE tokens — and train a single transformer on the combined stream. Used by Gato, GPT-4o, and Gemini.
+  </Card>
+</CardGroup>
+
+---
+
+## CLIP: Connecting vision and language
+
+CLIP (Contrastive Language-Image Pre-training, Radford et al. 2021) is the model that made zero-shot image classification practical. It trains a vision encoder and a text encoder jointly on 400 million (image, caption) pairs scraped from the web.
+
+The training objective is simple: for a batch of N (image, text) pairs, maximize the cosine similarity of the N correct pairs and minimize the similarity of the N² − N incorrect pairs.
+
+```
+         ┌─────────────┐
+images ──▶ Vision      ├──▶ image embeddings ──┐
+         │ Encoder     │                        │   cosine
+         └─────────────┘                        ├── similarity
+                                                │   matrix
+         ┌─────────────┐                        │   (N × N)
+captions▶ Text         ├──▶ text embeddings  ──┘
+         │ Encoder     │
+         └─────────────┘
+```
+
+At inference, CLIP needs no task-specific labels. To classify an image, encode it and encode a list of candidate class names ("a photo of a cat", "a photo of a dog", ...). The class whose text embedding is most similar to the image embedding wins. This works for any class you can describe in natural language — even classes the model has never seen.
+
+CLIP's learned embedding space enables downstream tasks beyond classification:
+
+<CardGroup cols={2}>
+  <Card title="Image-text retrieval" icon="magnifying-glass">
+    Encode a corpus of images and a query string, then retrieve the most similar images by cosine similarity. The foundation of multimodal search engines.
+  </Card>
+  <Card title="Semantic image clustering" icon="object-group">
+    Cluster image embeddings without labels. CLIP embeddings group semantically similar images even when they look visually different.
+  </Card>
+  <Card title="Prompt-guided generation" icon="paintbrush">
+    Stable Diffusion uses a CLIP text encoder to condition image generation. The text embedding directly guides what the diffusion model produces.
+  </Card>
+  <Card title="CLIP score evaluation" icon="star">
+    Measure alignment between generated images and their text prompts. Higher CLIP score = the image better matches the description. Standard metric for evaluating text-to-image models.
+  </Card>
+</CardGroup>
+
+---
+
+## Vision-language models
+
+VLMs extend large language models to accept images as input alongside text. The architecture bridges the vision and language towers:
+
+```
+Image ──▶ Vision Encoder ──▶ Projection Layer ──▶ ┐
+                                                    ├──▶ LLM ──▶ Text
+Text tokens ────────────────────────────────────▶ ┘
+```
+
+The vision encoder (typically a ViT) produces a sequence of patch embeddings. The projection layer — a linear layer or a small MLP — maps these into the LLM's embedding space. The LLM then attends over both image tokens and text tokens jointly.
+
+Key models and their design choices:
+
+| Model | Vision encoder | Projection | LLM backbone |
+|-------|---------------|------------|--------------|
+| LLaVA | CLIP ViT-L/14 | Linear | Llama / Vicuna |
+| InternVL | InternViT-6B | MLP | InternLM / Llama |
+| Qwen-VL | ViT-bigG | Cross-attention | Qwen |
+| Flamingo | NFNet | Perceiver resampler | Chinchilla |
+| GPT-4o | Undisclosed | Undisclosed | GPT-4 class |
+
+The projection layer is the key engineering decision. A simple linear projection is efficient but limits representational capacity. A cross-attention mechanism (as in Flamingo) is more powerful but adds latency. Most open-source VLMs use a two-layer MLP as the sweet spot.
+
+---
+
+## Audio-language models
+
+Audio-language models process speech, music, or environmental sounds alongside text. The pipeline mirrors the vision-language approach:
+
+```
+Audio ──▶ Audio Encoder ──▶ Adapter ──▶ LLM
+```
+
+Two dominant audio encoders:
+
+- **Whisper encoder**: extracts speech features from log-mel spectrograms. Pre-trained on 680,000 hours of speech. Strong for speech recognition tasks.
+- **EnCodec / Codec2**: encodes audio as discrete tokens using a neural codec. Enables the LLM to generate audio as a sequence of tokens.
+
+Models in this space: Qwen-Audio, WavLLM, AudioPaLM, Phi-4-audio. The binding capability — asking the model questions about audio content — is the primary use case for lesson 04.
+
+---
+
+## Document understanding
+
+Document understanding combines vision and NLP to process documents that cannot be parsed as raw text: scanned PDFs, forms, tables, charts, and slides.
+
+<CardGroup cols={2}>
+  <Card title="Layout-aware models" icon="file-text">
+    Models like LayoutLM and DocFormer process the visual layout of a document (bounding boxes, font sizes, spatial positions) alongside the text content. A table cell gets different treatment than a heading.
+  </Card>
+  <Card title="OCR-free models" icon="eye">
+    Models like Donut and Pix2Struct process the document as an image directly, bypassing OCR entirely. More robust to noisy scans and unusual layouts; slower than OCR-based approaches.
+  </Card>
+  <Card title="VLM-based extraction" icon="wand-sparkles">
+    Send document pages as images to a vision-language model (GPT-4o, Claude, Gemini) with a structured extraction prompt. Flexible but expensive for high-volume pipelines.
+  </Card>
+  <Card title="Hybrid pipelines" icon="layers">
+    Combine OCR for text extraction with VLMs for layout understanding. Use heuristics to decide when to escalate to VLM processing (low OCR confidence, complex tables, charts).
+  </Card>
+</CardGroup>
+
+---
+
+## Video-language models
+
+Video adds the temporal dimension: a sequence of frames over time. The core challenge is that processing every frame is computationally prohibitive — a 1-minute video at 30fps is 1,800 frames.
+
+Practical approaches:
+
+- **Sparse frame sampling**: sample frames uniformly or based on scene cuts. Works for slow-moving content; misses fast events.
+- **Temporal pooling**: encode all frames with a vision encoder, then pool the frame embeddings over time. Efficient but loses temporal order.
+- **Video transformers**: treat frames as a spatiotemporal volume and apply 3D attention. Accurate but expensive (Video-LLaMA, PLLaVA).
+
+The lesson covers Video-LLaMA-style architectures and common downstream tasks: video captioning, temporal grounding ("at what timestamp does X happen?"), and video question answering.
+
+---
+
+## Multimodal RAG
+
+Multimodal RAG retrieves both text chunks and images to answer queries. The index holds heterogeneous content:
+
+```
+Query ──▶ Embed ──▶ Search mixed index ──▶ Retrieve text + images
+                                      ──▶ Augment VLM context
+                                      ──▶ Generate answer
+```
+
+The key challenge is embedding heterogeneous content into a shared retrieval space. CLIP embeddings work naturally here — you can embed both text queries and images into the same space and compute similarity across modalities.
+
+A production multimodal RAG pipeline:
+
+<Steps>
+  <Step title="Index documents">
+    Extract text chunks, images, and tables from source documents. Embed text with a text encoder (e.g., `text-embedding-3-small`). Embed images with a vision encoder (e.g., CLIP ViT-L/14). Store all embeddings in a vector database with a `modality` field.
+  </Step>
+  <Step title="Query routing">
+    Embed the user query with both text and vision encoders. Retrieve top-k results across both modality indexes, then merge with Reciprocal Rank Fusion.
+  </Step>
+  <Step title="Context assembly">
+    Interleave retrieved text chunks and images in the VLM context window. Text chunks appear as text; images appear as image tokens.
+  </Step>
+  <Step title="Generate response">
+    Send the augmented context to a VLM (GPT-4o, Claude 3.5 Sonnet, or Qwen-VL). The model attends over both text and image context to produce a grounded answer.
+  </Step>
+</Steps>
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    # from openai import OpenAI
+    # import base64
+    #
+    # def multimodal_rag_query(query, retrieved_chunks, retrieved_images):
+    #     content = [{"type": "text", "text": f"Question: {query}\n\nContext:"}]
+    #
+    #     for chunk in retrieved_chunks:
+    #         content.append({"type": "text", "text": chunk["text"]})
+    #
+    #     for img_path in retrieved_images:
+    #         with open(img_path, "rb") as f:
+    #             img_b64 = base64.b64encode(f.read()).decode()
+    #         content.append({
+    #             "type": "image_url",
+    #             "image_url": {"url": f"data:image/jpeg;base64,{img_b64}"}
+    #         })
+    #
+    #     content.append({"type": "text", "text": "Answer based only on the context above."})
+    #
+    #     response = client.chat.completions.create(
+    #         model="gpt-4o",
+    #         messages=[{"role": "user", "content": content}],
+    #     )
+    #     return response.choices[0].message.content
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    // import Anthropic from "@anthropic-ai/sdk";
+    // import { readFileSync } from "fs";
+    //
+    // async function multimodalRagQuery(
+    //   query: string,
+    //   textChunks: string[],
+    //   imagePaths: string[]
+    // ) {
+    //   const content: Anthropic.MessageParam["content"] = [];
+    //
+    //   for (const chunk of textChunks) {
+    //     content.push({ type: "text", text: chunk });
+    //   }
+    //
+    //   for (const imgPath of imagePaths) {
+    //     const imgData = readFileSync(imgPath).toString("base64");
+    //     content.push({
+    //       type: "image",
+    //       source: { type: "base64", media_type: "image/jpeg", data: imgData },
+    //     });
+    //   }
+    //
+    //   content.push({ type: "text", text: `Question: ${query}` });
+    //
+    //   const response = await client.messages.create({
+    //     model: "claude-3-5-sonnet-20241022",
+    //     max_tokens: 1024,
+    //     messages: [{ role: "user", content }],
+    //   });
+    //
+    //   return response.content[0].type === "text" ? response.content[0].text : "";
+    // }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Multimodal agents
+
+Multimodal agents can perceive their environment visually and take actions based on what they see. This unlocks:
+
+- **GUI automation**: an agent that reads screen content as images and clicks UI elements
+- **Visual QA pipelines**: agents that retrieve images, reason over them, and answer questions
+- **Robotics perception**: agents that interpret camera feeds to plan and execute physical actions
+
+The lesson builds a multimodal agent loop that: receives a task, captures a screenshot (or retrieves an image), encodes it with a VLM, plans the next action, and executes it — repeating until the task is complete.
+
+---
+
+## Text-to-image pipelines
+
+Lesson 09 covers the pipeline from text prompt to generated image, focusing on the production aspects of deploying diffusion-based systems:
+
+<CardGroup cols={2}>
+  <Card title="Stable Diffusion pipeline" icon="image">
+    CLIP text encoder → latent diffusion model (U-Net denoising) → VAE decoder. The latent space operates at 8× lower resolution than the output image, making generation feasible on consumer hardware.
+  </Card>
+  <Card title="ControlNet conditioning" icon="sliders">
+    Add spatial conditioning (edge maps, depth maps, pose skeletons) to guide the generation. A ControlNet processes the conditioning signal and injects activations into the U-Net at each denoising step.
+  </Card>
+  <Card title="LoRA for style transfer" icon="palette">
+    Fine-tune a small LoRA adapter on a target style (10–20 images). The adapter shifts the model's output distribution toward the target style without retraining the full model.
+  </Card>
+  <Card title="SDXL and beyond" icon="sparkles">
+    SDXL uses a two-stage pipeline: a base model generates a low-resolution latent, a refiner model upscales it. FLUX.1 replaces the U-Net with a rectified flow transformer for higher quality and faster inference.
+  </Card>
+</CardGroup>
+
+---
+
+## Text-to-video pipelines
+
+Text-to-video extends diffusion to the temporal dimension. Current architectures:
+
+- **Video diffusion models**: extend 2D U-Nets with temporal attention layers. Each frame is generated jointly, maintaining consistency across the video.
+- **Autoregressive video**: generate frames one by one conditioned on previous frames. Simpler but accumulates error over long sequences.
+- **Latent video diffusion**: operate in a compressed latent space (as Stable Video Diffusion does), then decode to pixels. Reduces memory from O(T × H × W) to O(T × h × w) where h, w are the compressed dimensions.
+
+Key models: Stable Video Diffusion (Stability AI), Sora (OpenAI, closed), Wan2.1 (Alibaba, open), CogVideoX.
+
+---
+
+## Any-to-any models
+
+The final lesson surveys models that unify all modalities in a single architecture and can map any modality to any other: text-to-image, image-to-text, audio-to-text, text-to-audio, and combinations thereof.
+
+Representative architectures:
+
+| Model | Approach | Input modalities | Output modalities |
+|-------|----------|-----------------|-------------------|
+| Gato (DeepMind) | Multi-task transformer with unified token vocabulary | Text, images, actions, observations | Text, actions |
+| GPT-4o | Undisclosed unified architecture | Text, images, audio | Text, images, audio |
+| Gemini 1.5 Pro | Multi-stream transformer | Text, images, audio, video | Text |
+| ChameleonMix | Discrete token unification | Text, images | Text, images |
+| MetaVoice-1B | Speech-text unified model | Text, audio | Audio |
+
+The trend is toward models that share a single transformer backbone across all modalities, using modality-specific encoders and decoders at the boundaries. This allows cross-modal reasoning — the model can compare image regions to audio segments to text passages in the same attention computation — rather than passing representations across separate models.

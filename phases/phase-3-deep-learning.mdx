@@ -1,0 +1,233 @@
+---
+title: "Phase 3: Deep Learning Core — Neural Nets from Scratch"
+description: "13 lessons, ~15 hours. Build neural networks from perceptron through backprop, write your own mini framework in pure Python, then graduate to PyTorch and JAX."
+keywords: ["deep learning", "backpropagation", "neural networks", "PyTorch", "JAX", "activation functions", "loss functions", "optimizers", "mini framework", "perceptron"]
+sidebarTitle: "Phase 3: Deep Learning Core"
+---
+
+Phase 3 is the conceptual core of the entire course. The rule here is simple: no frameworks until you've built what they abstract. You'll start with the original perceptron, derive the multi-layer network forward pass by hand, implement backpropagation from the chain rule alone, then build every standard component — activations, loss functions, optimizers, regularization — in pure Python. The capstone is lesson 10: a working mini deep learning framework (~500 lines, no dependencies) that trains a neural network on a real classification problem. Only after building it yourself do lessons 11 and 12 introduce PyTorch and JAX, at which point the framework code will feel familiar rather than magical.
+
+<Note>
+All 13 Phase 3 lessons are complete (✅). Every lesson uses Python. Lesson 10 (Build Your Own Mini Framework) is the longest at ~120 minutes — it's worth every minute.
+</Note>
+
+## Phase overview
+
+| Stat | Value |
+|------|-------|
+| Lessons | 13 |
+| Estimated time | ~15 hours |
+| Status | ✅ Complete |
+| Languages | Python |
+| Lesson types | 13 Build (all lessons are Build) |
+
+## Lesson catalog
+
+| # | Lesson | Type | Status | Est. |
+|:---:|--------|:----:|:------:|------|
+| 01 | The Perceptron — Where It All Started | Build | ✅ | ~45 min |
+| 02 | Multi-Layer Networks & Forward Pass | Build | ✅ | ~75 min |
+| 03 | Backpropagation from Scratch | Build | ✅ | ~75 min |
+| 04 | Activation Functions — ReLU, Sigmoid, GELU & Why | Build | ✅ | ~45 min |
+| 05 | Loss Functions — MSE, Cross-Entropy, Contrastive | Build | ✅ | ~45 min |
+| 06 | Optimizers — SGD, Momentum, Adam, AdamW | Build | ✅ | ~75 min |
+| 07 | Regularization — Dropout, Weight Decay, BatchNorm | Build | ✅ | ~75 min |
+| 08 | Weight Initialization & Training Stability | Build | ✅ | ~45 min |
+| 09 | Learning Rate Schedules & Warmup | Build | ✅ | ~45 min |
+| 10 | Build Your Own Mini Framework | Build | ✅ | ~120 min |
+| 11 | Introduction to PyTorch | Build | ✅ | ~75 min |
+| 12 | Introduction to JAX | Build | ✅ | ~75 min |
+| 13 | Debugging Neural Networks | Build | ✅ | ~75 min |
+
+## Key concepts
+
+<CardGroup cols={2}>
+  <Card title="The perceptron & forward pass" icon="arrow-right">
+    The original Rosenblatt perceptron as a linear threshold unit. Multi-layer networks as compositions of linear transformations and non-linearities. How activations propagate through layers during the forward pass.
+  </Card>
+  <Card title="Backpropagation" icon="arrow-left">
+    Reverse-mode automatic differentiation applied to a computation graph. The chain rule iterated layer by layer to compute `∂L/∂W` for every parameter simultaneously — the algorithm that made deep learning tractable.
+  </Card>
+  <Card title="Activation functions" icon="wave-square">
+    ReLU and its dead-neuron problem. Sigmoid and vanishing gradients. GELU's smooth approximation used in modern transformers. How activation choice affects gradient flow depth.
+  </Card>
+  <Card title="Loss functions" icon="target">
+    MSE for regression, binary and categorical cross-entropy for classification, contrastive loss for similarity learning. How each loss shapes the gradient signal the optimizer receives.
+  </Card>
+  <Card title="Optimizers" icon="trending-down">
+    SGD with momentum, RMSProp, Adam, and AdamW. Why adaptive learning rate methods converge faster. The weight decay correction that makes AdamW better than L2-regularized Adam.
+  </Card>
+  <Card title="Regularization" icon="shield">
+    Dropout as stochastic ensemble training. L2 weight decay as a prior toward small weights. Batch normalization as internal covariate shift correction — and its effect on training stability.
+  </Card>
+</CardGroup>
+
+## Lesson 10 deep dive: Build Your Own Mini Framework
+
+Lesson 10 is the Phase 3 capstone. You build a working deep learning framework in ~500 lines of pure Python — no NumPy, no PyTorch, no dependencies. The framework includes every component built in lessons 01–09, integrated into a coherent, PyTorch-style API.
+
+### Framework architecture
+
+```
+phases/03-deep-learning-core/10-mini-framework/code/main.py
+├── Module (base class: forward, backward, parameters, train/eval)
+├── Layers
+│   ├── Linear     — weight matrix + bias, He initialization
+│   ├── ReLU       — element-wise, stores mask for backward
+│   ├── Sigmoid    — numerically stable, stores output for backward
+│   ├── Tanh       — stores output for backward
+│   ├── Dropout    — inverted dropout with training/eval toggle
+│   └── BatchNorm  — running stats, gamma/beta learnable params
+├── Containers
+│   └── Sequential — composes modules, routes forward/backward
+├── Loss functions
+│   ├── MSELoss    — mean squared error
+│   └── BCELoss    — binary cross-entropy, numerically stable
+├── Optimizers
+│   ├── SGD        — with optional momentum
+│   └── Adam       — bias-corrected first/second moment estimates
+└── DataLoader     — batching + shuffle for mini-batch training
+```
+
+### Real code: the `Sequential` container and training loop
+
+The `Sequential` module is the heart of the framework — it chains any number of `Module`s together and routes gradients in reverse order during backprop:
+
+```python
+# From phases/03-deep-learning-core/10-mini-framework/code/main.py
+
+class Sequential(Module):
+    def __init__(self, *modules):
+        super().__init__()
+        self.modules = list(modules)
+
+    def forward(self, x):
+        for module in self.modules:
+            x = module.forward(x)
+        return x
+
+    def backward(self, grad):
+        # Reverse order: gradients flow from output back to input
+        for module in reversed(self.modules):
+            grad = module.backward(grad)
+        return grad
+
+    def parameters(self):
+        params = []
+        for module in self.modules:
+            params.extend(module.parameters())
+        return params
+
+    def train(self):
+        self.training = True
+        for module in self.modules:
+            module.train()
+
+    def eval(self):
+        self.training = False
+        for module in self.modules:
+            module.eval()
+
+
+# Training a 4-layer network on the circle classification task
+model = Sequential(
+    Linear(2, 16),
+    ReLU(),
+    Linear(16, 16),
+    ReLU(),
+    Linear(16, 8),
+    ReLU(),
+    Linear(8, 1),
+    Sigmoid(),
+)
+
+criterion = BCELoss()
+optimizer = Adam(model.parameters(), lr=0.01)
+
+model.train()
+for epoch in range(100):
+    for x, t in train_data:
+        pred = model.forward(x)
+        loss = criterion(pred, t)
+
+        optimizer.zero_grad()
+        grad = criterion.backward()
+        model.backward(grad)
+        optimizer.step()
+```
+
+### What the framework proves
+
+Running the three experiments in `main.py` shows real results from a purely Python implementation:
+
+| Experiment | Architecture | Optimizer | Test accuracy |
+|------------|-------------|-----------|:-------------:|
+| Baseline | 2→16→16→8→1 | Adam (lr=0.01) | ~95% |
+| SGD comparison | Same | SGD (lr=0.1) | ~88% |
+| With Dropout | Same + Dropout(p=0.3) | Adam (lr=0.01) | ~94% |
+
+These numbers come from 500 samples on a circle classification task — inside or outside a circle of radius √1.5 — trained for 100 epochs in pure Python with no acceleration.
+
+## Lesson 05 outputs: reusable prompts
+
+Every lesson produces artifacts you keep. Lesson 05 (Loss Functions) ships two reusable prompts into `outputs/`:
+
+```bash
+phases/03-deep-learning-core/05-loss-functions/outputs/
+├── prompt-loss-function-selector.md   # Prompt for choosing the right loss given a task
+└── prompt-loss-debugger.md            # Prompt for diagnosing loss curves and training failures
+```
+
+Paste either prompt into any AI assistant to get expert-level guidance on loss function selection or debugging a training run.
+
+## Getting started with Phase 3
+
+<Steps>
+  <Step title="Complete Phases 1 and 2">
+    Phase 3 requires comfort with gradient descent (Phase 1, lesson 08) and a general sense of what ML models are (Phase 2, lessons 01–03). Backpropagation in lesson 03 is a direct application of the chain rule from Phase 1, lesson 05.
+  </Step>
+  <Step title="Install dependencies">
+    ```bash
+    pip install numpy torch  # PyTorch needed for lessons 11–12 only
+    # JAX (lesson 12):
+    pip install jax jaxlib
+    ```
+  </Step>
+  <Step title="Start with the perceptron">
+    ```bash
+    cd phases/03-deep-learning-core/01-the-perceptron
+    python code/main.py
+    ```
+    The perceptron is 30 lines. Getting it working sets the mental model for everything that follows.
+  </Step>
+  <Step title="Do not skip to PyTorch">
+    Lessons 11 and 12 (PyTorch, JAX) make much more sense after building the mini framework in lesson 10. The framework's `Linear`, `backward`, and `Adam` classes map directly to PyTorch's equivalents.
+  </Step>
+  <Step title="Run the mini framework capstone">
+    ```bash
+    cd phases/03-deep-learning-core/10-mini-framework
+    python code/main.py
+    ```
+    This runs all three experiments (Adam, SGD, Dropout) and prints accuracy for each. Reaching ~95% accuracy with pure Python is the Phase 3 milestone.
+  </Step>
+  <Step title="Check your understanding">
+    ```
+    /check-understanding 3
+    ```
+  </Step>
+</Steps>
+
+## Prerequisites
+
+- **Phase 0** (working Python environment)
+- **Phase 1 lessons 04–08** (calculus, chain rule, autodiff, optimization)
+- **Phase 2 lessons 01–03** (what ML is, regression, classification)
+
+## What comes next
+
+With Phase 3 complete you have built a working neural network framework from first principles. The next phases apply this foundation to specific domains:
+
+- **[Phase 4: Computer Vision](/phases/phase-4-computer-vision)** — convolutions, CNNs, detection, segmentation
+- **[Phase 7: Transformers](/phases/phase-7-transformers)** — attention, BERT, GPT, built on the same forward/backward machinery you now understand
+
+The deep learning core — backprop, activations, optimizers, regularization — underpins every model in every subsequent phase.

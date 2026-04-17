@@ -1,0 +1,143 @@
+---
+title: 'Phase 8: Generative AI (~14 hrs)'
+description: '14 lessons, ~14 hours. Build generative models from VAEs and GANs through DDPM, Stable Diffusion, ControlNet, flow matching, and FID/CLIP score evaluation.'
+keywords: ['generative AI', 'diffusion models', 'GANs', 'VAE', 'Stable Diffusion', 'ControlNet', 'LoRA', 'DDPM', 'flow matching', 'FID score', 'StyleGAN']
+---
+
+Generative AI is the field of building models that produce new content — images, video, audio, and 3D geometry — rather than merely classifying existing data. This phase traces the full genealogy of generative modeling: from the latent-variable perspective of autoencoders, through the adversarial training of GANs, to the denoising process of diffusion models that now power most state-of-the-art image synthesis. Every architecture is built from scratch before being used through existing libraries.
+
+<Note>
+  **Status: ⬚ Planned** — This phase is fully scoped. See the [roadmap](https://github.com/rohitg00/ai-engineering-from-scratch/blob/main/ROADMAP.md) for the latest progress.
+</Note>
+
+## Phase stats
+
+| Detail | Value |
+|--------|-------|
+| Lessons | 14 |
+| Estimated time | ~14 hours |
+| Status | ⬚ Planned |
+| Languages | Python |
+| Prerequisites | Phase 3 — Deep Learning Core, Phase 4 — Computer Vision |
+
+## Lessons
+
+| # | Lesson | Type | Lang | Status |
+|:---:|--------|:----:|------|:------:|
+| 01 | Generative Models: Taxonomy & History | Learn | — | ⬚ |
+| 02 | Autoencoders & VAE | Build | 🐍 | ⬚ |
+| 03 | GANs: Generator vs Discriminator | Build | 🐍 | ⬚ |
+| 04 | Conditional GANs & Pix2Pix | Build | 🐍 | ⬚ |
+| 05 | StyleGAN | Build | 🐍 | ⬚ |
+| 06 | Diffusion Models — DDPM from Scratch | Build | 🐍 | ⬚ |
+| 07 | Latent Diffusion & Stable Diffusion | Build | 🐍 | ⬚ |
+| 08 | ControlNet, LoRA & Image Conditioning | Build | 🐍 | ⬚ |
+| 09 | Inpainting, Outpainting & Image Editing | Build | 🐍 | ⬚ |
+| 10 | Video Generation | Build | 🐍 | ⬚ |
+| 11 | Audio Generation | Build | 🐍 | ⬚ |
+| 12 | 3D Generation | Build | 🐍 | ⬚ |
+| 13 | Flow Matching & Rectified Flows | Build | 🐍 | ⬚ |
+| 14 | Evaluation: FID, CLIP Score, Human Preference | Build | 🐍 | ⬚ |
+
+## Key techniques and architectures
+
+<CardGroup cols={2}>
+  <Card title="Latent variable models" icon="compress">
+    Autoencoders that learn compressed representations; VAEs that impose a structured prior over the latent space, enabling smooth interpolation and controlled generation.
+  </Card>
+  <Card title="Adversarial training" icon="person-fencing">
+    GAN generator-discriminator minimax game; conditional GANs with class labels or paired images; StyleGAN's style-based generator with adaptive instance normalization.
+  </Card>
+  <Card title="Diffusion models" icon="cloud-showers-heavy">
+    DDPM forward noising process and learned denoising from scratch; U-Net noise predictor; latent diffusion that compresses into a VAE latent space before diffusing.
+  </Card>
+  <Card title="Conditioning & control" icon="sliders">
+    CLIP text conditioning for Stable Diffusion; ControlNet structural conditioning (edges, depth, pose); LoRA low-rank weight adaptation for efficient fine-tuning; flow matching as a continuous-time alternative to discrete DDPM steps.
+  </Card>
+</CardGroup>
+
+## What you'll build
+
+By the end of this phase you will have shipped:
+
+- A VAE trained on MNIST or CIFAR-10 with a latent space visualization and interpolation demo
+- A GAN that generates handwritten digits, with loss curves showing the adversarial training dynamics
+- A conditional GAN (Pix2Pix) that translates edge maps to photorealistic images
+- A DDPM diffusion model trained from scratch on a small image dataset
+- A Stable Diffusion text-to-image inference pipeline with sampler choices (DDIM, DPM-Solver)
+- A ControlNet conditioning script that guides generation with depth or edge maps
+- A LoRA fine-tuning script that adapts Stable Diffusion to a custom art style in under 1 hour of GPU time
+- An inpainting tool that fills masked regions coherently
+- An FID and CLIP score evaluation harness for comparing generative model quality
+
+## Prerequisites
+
+<Tabs>
+  <Tab title="Required">
+    **Phase 3 — Deep Learning Core** (all lessons): VAEs and GANs require solid backprop, loss functions, and PyTorch. **Phase 4 — Computer Vision** (lessons 1–8): diffusion models use U-Net architectures that build directly on the segmentation lessons.
+  </Tab>
+  <Tab title="Recommended">
+    **Phase 7 — Transformers** (lessons 1–5): Stable Diffusion's text encoder is a transformer. Understanding how CLIP maps text and images into a shared space is much clearer with transformer internals in hand.
+  </Tab>
+</Tabs>
+
+## Core concept: DDPM forward and reverse process
+
+Diffusion models learn to reverse a gradual noising process. The forward process adds Gaussian noise over `T` timesteps until the image is pure noise. A neural network (typically a U-Net) learns to predict and remove that noise one step at a time.
+
+```python
+import numpy as np
+
+class DDPMScheduler:
+    """Linear noise schedule for DDPM (Ho et al., 2020)."""
+
+    def __init__(self, T=1000, beta_start=1e-4, beta_end=0.02):
+        self.T = T
+        # Linear schedule: beta_t increases from beta_start to beta_end
+        self.betas = np.linspace(beta_start, beta_end, T)
+        self.alphas = 1 - self.betas
+        self.alpha_bars = np.cumprod(self.alphas)   # ᾱ_t = ∏ α_s for s≤t
+
+    def q_sample(self, x0, t, noise=None):
+        """Forward process: add noise to x0 at timestep t.
+
+        Closed form: x_t = sqrt(ᾱ_t) * x0 + sqrt(1 - ᾱ_t) * ε
+        """
+        if noise is None:
+            noise = np.random.randn(*x0.shape)
+        alpha_bar_t = self.alpha_bars[t]
+        return (np.sqrt(alpha_bar_t) * x0 +
+                np.sqrt(1 - alpha_bar_t) * noise), noise
+
+    def p_sample(self, x_t, t, predicted_noise):
+        """Reverse process: one denoising step given predicted noise.
+
+        x_{t-1} = (1/sqrt(α_t)) * (x_t - β_t/sqrt(1-ᾱ_t) * ε_θ) + σ_t * z
+        """
+        beta_t = self.betas[t]
+        alpha_t = self.alphas[t]
+        alpha_bar_t = self.alpha_bars[t]
+
+        coeff = beta_t / np.sqrt(1 - alpha_bar_t)
+        mean = (x_t - coeff * predicted_noise) / np.sqrt(alpha_t)
+
+        if t > 0:
+            noise = np.random.randn(*x_t.shape)
+            variance = np.sqrt(beta_t)
+        else:
+            noise = 0
+            variance = 0
+
+        return mean + variance * noise
+
+# Training loop (pseudocode — replace unet with a real PyTorch U-Net):
+# scheduler = DDPMScheduler()
+# for x0 in dataloader:
+#     t = np.random.randint(0, scheduler.T)
+#     x_t, true_noise = scheduler.q_sample(x0, t)
+#     predicted_noise = unet(x_t, t)           # U-Net predicts the noise
+#     loss = mse(predicted_noise, true_noise)   # simple MSE objective
+#     loss.backward()
+```
+
+The elegant insight: instead of learning to generate directly, the model learns to denoise. At inference time it starts from pure Gaussian noise and takes `T` denoising steps, each guided by the learned U-Net.

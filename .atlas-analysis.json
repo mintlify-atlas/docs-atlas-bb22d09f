@@ -1,23 +1,11 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "name": "AI Engineering from Scratch",
+  "projectType": "ai-ml",
+  "projectName": "AI Engineering from Scratch",
+  "projectDescription": "A comprehensive 260+ lesson, 20-phase open-source course that takes learners from linear algebra to autonomous agent swarms, producing reusable prompts, skills, agents, and MCP servers along the way.",
   "theme": "palm",
-  "colors": {
-    "primary": "#D97757",
-    "dark": "#0D1117"
-  },
-  "navbar": {
-    "primary": {
-      "type": "github",
-      "href": "https://github.com/rohitg00/ai-engineering-from-scratch"
-    }
-  },
-  "footer": {
-    "socials": {
-      "github": "https://github.com/rohitg00/ai-engineering-from-scratch",
-      "x": "https://x.com/ghumare64"
-    }
-  },
+  "primaryColor": "#D97757",
+  "lightColor": null,
+  "darkColor": "#0D1117",
   "navigation": {
     "tabs": [
       {
@@ -89,5 +77,25 @@
         ]
       }
     ]
-  }
+  },
+  "keyFeatures": [
+    "260+ lessons across 20 phases covering the full AI engineering stack",
+    "AI-native learning with built-in Claude Code skills (/find-your-level, /check-understanding)",
+    "Every lesson ships a reusable artifact: prompts, skills, agents, or MCP servers",
+    "Build-from-scratch approach: implement algorithms before using frameworks",
+    "Multi-language curriculum: Python, TypeScript, Rust, and Julia",
+    "Covers math foundations through autonomous agent swarms (~290 hours)",
+    "Searchable 277-term glossary and per-phase quizzes",
+    "Open-source with MIT license; community contributions welcome"
+  ],
+  "publicApiSurface": [
+    "/find-your-level — Claude Code skill: 10-question quiz that maps knowledge to a starting phase",
+    "/check-understanding <phase> — Claude Code skill: per-phase quiz with 8 questions and targeted review",
+    "phases/XX-phase-name/NN-lesson-name/code/ — runnable Python/TypeScript/Rust/Julia implementations",
+    "phases/XX-phase-name/NN-lesson-name/outputs/ — reusable prompts, skills, and agents",
+    "outputs/prompts/ — prompt templates for every AI task",
+    "outputs/skills/ — SKILL.md files for Claude Code, Cursor, or any AI agent",
+    "outputs/agents/ — agent definitions ready to deploy",
+    "outputs/mcp-servers/ — MCP servers built during the course"
+  ]
 }

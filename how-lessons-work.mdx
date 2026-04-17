@@ -1,0 +1,168 @@
+---
+title: "How lessons work: structure and outputs"
+description: "Every lesson follows a 6-step pattern from problem statement to shipped tool. Learn the Build It / Use It split and what each lesson produces."
+keywords: ["lesson structure", "build it use it", "lesson template", "outputs", "prompts skills agents mcp"]
+---
+
+Every lesson in this course follows the same six-step structure, regardless of phase or topic. Understanding this structure before you start means you know exactly what to expect — and why the course is organized the way it is.
+
+## The 6-step lesson structure
+
+<Steps>
+  <Step title="Motto">
+    A single sentence that captures the core insight of the lesson. It's designed to stick. The motto for Phase 14, Lesson 1 (The Agent Loop) is:
+
+    > *An agent is just a while loop with an LLM inside. Everything else is details.*
+
+    Read the motto before you start and check whether it makes sense after you finish.
+  </Step>
+  <Step title="Problem">
+    A concrete scenario where not knowing this topic causes a real problem. Two to three paragraphs. No code yet — just the situation that makes you need what's coming.
+
+    Example from The Agent Loop: *"You can prompt an LLM. You can call its API. But it can only respond — it can't act. It can't read files, run code, search the web, or fix its own mistakes. An agent can. The difference is one pattern: a loop."*
+  </Step>
+  <Step title="Concept">
+    The mental model, with diagrams and intuition. Still no implementation code. ASCII diagrams, comparison tables, and visual explanations appear here. The goal is to have a clear picture of what you're about to build before you build it.
+  </Step>
+  <Step title="Build It">
+    Implementation from scratch, in pure language with no framework dependencies. You write the actual algorithm — the backpropagation pass, the agent loop, the attention mechanism — step by step.
+
+    This is where most of the lesson time goes. Each step is a runnable code block with a clear purpose.
+  </Step>
+  <Step title="Use It">
+    The same concept implemented using the real framework or library. After building backpropagation from scratch in pure Python, you see how PyTorch does it. After building the agent loop yourself, you see how production agent frameworks structure the same pattern.
+
+    The comparison is the point. You understand what the framework does because you already built the thing it wraps.
+  </Step>
+  <Step title="Ship It">
+    The reusable artifact this lesson produces. Every lesson ends by creating something you save to `outputs/` and can use immediately — a prompt, a Claude Code skill, an agent definition, or an MCP server.
+  </Step>
+</Steps>
+
+## The Build It / Use It distinction
+
+The split between Build It and Use It is the most important structural decision in the course. Here is why it exists.
+
+Most courses go framework-first: install PyTorch, call `nn.Linear`, observe that training works. You learn the API surface but not what the API is doing. When something breaks — and in production, things break — you have no model of what's happening underneath.
+
+This course reverses the order. You implement the concept in plain Python or TypeScript first. No `torch.autograd`. No `transformers.Trainer`. Just arrays and math and explicit loops. Then, once you have that working, you switch to the framework version and see that it does the same thing — with better performance, better defaults, and production-grade edge-case handling.
+
+The result: you use frameworks with genuine understanding of what they abstract. Debugging becomes reasoning rather than guessing.
+
+<Info>
+Build It and Use It are always in the same lesson. You don't spend five phases writing everything from scratch before seeing a framework. The transition happens within a single ~45–75 minute lesson.
+</Info>
+
+## Lesson directory structure
+
+Every lesson lives in `phases/XX-phase-name/NN-lesson-name/` and follows this layout:
+
+```
+NN-lesson-name/
+├── code/
+│   ├── main.py           primary Python implementation
+│   ├── main.ts           TypeScript version (where applicable)
+│   ├── main.rs           Rust version (where applicable)
+│   └── main.jl           Julia version (where applicable)
+├── notebook/
+│   └── lesson.ipynb      Jupyter notebook for experimentation
+├── docs/
+│   └── en.md             full lesson documentation
+└── outputs/
+    ├── prompt-*.md        prompts produced by this lesson
+    └── skill-*.md         skills produced by this lesson
+```
+
+The `code/` files are standalone — each one runs without referencing other lessons. The `docs/en.md` file contains the complete written lesson with the 6-step structure. The `outputs/` directory holds the reusable artifacts the lesson ships.
+
+## What lessons produce
+
+Every lesson ships at least one artifact to `outputs/`. There are four types:
+
+<CardGroup cols={2}>
+  <Card title="Prompts" icon="file-lines">
+    Markdown files with expert-level prompt templates. Paste them into Claude, ChatGPT, or any AI assistant. For example, the loss functions lesson (Phase 3, Lesson 5) ships:
+
+    - `prompt-loss-function-selector.md` — helps you choose the right loss function for a task
+    - `prompt-loss-debugger.md` — diagnoses why your loss isn't decreasing
+  </Card>
+  <Card title="Skills" icon="cards-blank">
+    `SKILL.md` files you install into Claude Code, Cursor, or any agent. Once installed, a skill becomes a command the agent understands. The course itself uses two skills: `/find-your-level` and `/check-understanding`.
+  </Card>
+  <Card title="Agents" icon="user-robot">
+    Agent definitions ready to deploy as autonomous workers. Agents appear in Phase 14 onward as the lessons shift from building components to deploying systems.
+  </Card>
+  <Card title="MCP servers" icon="plug">
+    Model Context Protocol servers you build during Phase 13. These plug into any MCP-compatible AI application — Claude Desktop, Cursor, and others — and extend what those applications can do.
+  </Card>
+</CardGroup>
+
+By the end of the course, all outputs are organized into a single toolkit directory:
+
+```
+outputs/
+├── prompts/       prompt templates for every AI task covered
+├── skills/        SKILL.md files for AI coding agents
+├── agents/        agent definitions ready to deploy
+└── mcp-servers/   MCP servers built during the course
+```
+
+## A complete lesson example: The Agent Loop
+
+Phase 14, Lesson 1 illustrates the full structure with real code.
+
+**Motto:** *An agent is just a while loop with an LLM inside. Everything else is details.*
+
+**The concept** is a simple ASCII diagram showing the loop: LLM thinks → tool call? → yes: execute tool and feed result back → no: return answer. That's the entire pattern that powers Claude Code, Cursor, and Devin.
+
+**Build It** starts with 15 lines of pure Python:
+
+```python
+def agent_loop(llm, tools, user_message, max_turns=10):
+    messages = [{"role": "user", "content": user_message}]
+
+    for turn in range(max_turns):
+        response = llm.chat(messages, tools=tools)
+
+        if response.tool_calls:
+            messages.append(response.to_message())
+            for call in response.tool_calls:
+                result = tools[call.name].execute(**call.arguments)
+                messages.append({
+                    "role": "tool",
+                    "tool_use_id": call.id,
+                    "content": str(result)
+                })
+        else:
+            return response.content
+
+    return "Max turns reached"
+```
+
+The lesson then adds real tools (`read_file`, `write_file`, `run_command`, `list_files`) and wires the loop to the Anthropic API.
+
+**Use It** shows the same loop implemented with production agent frameworks, comparing the design decisions.
+
+**Ship It** produces:
+- `outputs/skill-agent-loop.md` — a Claude Code skill that teaches agents how to build agent loops
+- `outputs/prompt-agent-debugger.md` — a prompt for diagnosing agent behavior
+
+The exercises at the end extend the from-scratch implementation: add a web search tool, add a visible turn counter, add a reasoning step before each tool call.
+
+## Lesson types
+
+Lessons are tagged as **Build** or **Learn**:
+
+- **Build:** You write working code. The lesson includes a Build It section and produces an output artifact.
+- **Learn:** Concept-heavy lessons (like "Why Transformers" or "What Is Machine Learning") where the primary goal is building the right mental model. These still have code examples and exercises, but the emphasis is understanding over implementation.
+
+Most lessons are Build lessons. Learn lessons appear at the start of phases where the conceptual foundation matters before you write a line of code.
+
+<CardGroup cols={2}>
+  <Card title="Get started" icon="rocket" href="/quickstart">
+    Clone the repo and run your first lesson.
+  </Card>
+  <Card title="AI-native learning" icon="robot" href="/ai-native-learning">
+    Use the built-in skills to quiz yourself as you work through phases.
+  </Card>
+</CardGroup>
